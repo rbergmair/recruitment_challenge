@@ -24,7 +24,27 @@ However, aside from your typical data-sciencey things, we are always looking for
 4. When you're done꙳, initialize a Pull Request, and we'll checkout what you've done and benchmark your predictions.
  
 ### What does it mean to complete this challenge?
+Being able to write code, make models, and generate predictions is all well and good, but we need people who can also communicate insight. The point of this challenge is three-fold:
 
+1. Find out how good your ML-fu is.
+2. Find out how you think.
+3. Find out well you can communicate what you're thinking.
+ 
+Consequently, your deliverable is a .csv of predictions -- you're to model the "`y`" column of the training data -- and a report detailing how you arrived at your predictions. The report doesn't need to be [Pulitzer Prize](https://en.wikipedia.org/wiki/Pulitzer_Prize)-worthy, but a few lines about how,
+
+> _...[you] tried an SVM, and logistic regression with a cross-validated thresholding parameter..._
+
+is a one-way ticket to the trash bin. 
+
+#### The ideal report might include:
+* a (quantified) comparison of multiple models
+* any insight as to why certain methods performed better than others
+* graphics from any EDA that might have lead to feature-related insights
+* an explanation of any feature engineering that occurred
+* an analysis of the final model chosen to produce the uploaded predictions
+    * model performance (perhaps as a function of certain model parameters)
+    * decision boundaries or other interesting clustering results/visualizations
+ 
 
 ---
 \* So1 doesn't actually offer experimental hair surgery as an explicit employee benefit. Maybe the German goverment might, though!
