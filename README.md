@@ -15,10 +15,11 @@ However, aside from your typical data-sciencey things, we are always looking for
 
 ### Directions:
 1. Fork this repo.
-2. Download the [training data](link_to_amazon_s3), or (if you're a CLI junkie) use
+2. Download and unzip the [training data](link_to_amazon_s3), or (if you're a CLI junkie) use
    
     ```
     wget http://link.to.amazon
+    gunzip ...
     ```
 3. Load up your favorite text editor (mine is Vim :wink:) and start playing with/modeling the data.
 4. When you're done꙳, initialize a Pull Request, and we'll checkout what you've done and benchmark your predictions.
