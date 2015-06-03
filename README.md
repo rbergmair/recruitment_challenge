@@ -24,7 +24,7 @@ However, aside from your typical data-sciencey things, we are always looking for
     gunzip test.tsv.gz
     ```
 3. Load up your favorite text editor (mine is Vim :wink:) and start playing with/modeling the data.
-4. When you're done꙳, initialize a _[Pull Request](https://github.com/Segment-of-One/recruitment_challenge/pulls)_, and we'll checkout what you've done and benchmark your predictions.
+4. When you're done, initialize a _[Pull Request](https://github.com/Segment-of-One/recruitment_challenge/pulls)_, and we'll checkout what you've done and benchmark your predictions.
 
 Per usual github etiquette, if you spot any issues with the data, or need any clarifications, raise an _[issue](https://github.com/Segment-of-One/recruitment_challenge/issues)_.
 
