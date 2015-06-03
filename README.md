@@ -19,7 +19,7 @@ However, aside from your typical data-sciencey things, we are always looking for
    
     ```
     wget http://algo-recruitment-data.s3-website.eu-central-1.amazonaws.com/train.tsv.gz
-    wget http://algo-recruitment-data.s3-website.eu-central-1.amazonaws.com/train.tsv.gz
+    wget http://algo-recruitment-data.s3-website.eu-central-1.amazonaws.com/test.tsv.gz
     gunzip train.tsv.gz
     gunzip test.tsv.gz
     ```
