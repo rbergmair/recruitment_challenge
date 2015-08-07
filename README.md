@@ -40,6 +40,9 @@ Consequently, your deliverables are
   * At the risk of being pedantic, your `y` should come from data provided in the `id` row of `test.tsv`
   * We will be evaluating their [`F1`-score](https://en.wikipedia.org/wiki/F1_score)
 * A report detailing how you arrived at your predictions
+  * While other data scientists are your intended audience, assume that they have no interest in seeing code
+    snippets, in here
+  * Your report should contain complete sentences (and graphics, if you're inclined)
  
 The report doesn't need to be [Pulitzer Prize](https://en.wikipedia.org/wiki/Pulitzer_Prize)-worthy, but a few lines about how,
 
