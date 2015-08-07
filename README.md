@@ -59,6 +59,7 @@ is a one-way ticket to the trash bin.
     * Model performance (perhaps as a function of certain model parameters)
     * Decision boundaries or other interesting clustering results/visualizations
  
+_In case you're interested_, you can see how well you stack up [against previous participants](https://github.com/Segment-of-One/recruitment_challenge/wiki/Leader-Board).
 
 ---
 \* So1 doesn't actually offer experimental hair surgery as an explicit employee benefit. Maybe the German goverment might, though!
