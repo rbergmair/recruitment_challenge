@@ -36,7 +36,7 @@ Being able to write code, make models, and generate predictions is all well and 
 3. Find out well you can communicate what you're thinking
  
 Consequently, your deliverables are
-* A gzip'd .csv (or .tsv) of predictions containing columns named `id` and `y`
+* A gzip'd .csv (or .tsv) of (binary) predictions containing columns named `id` and `y`
   * At the risk of being pedantic, your `y` should come from data provided in the `id` row of `test.tsv`
   * We will be evaluating their [`F1`-score](https://en.wikipedia.org/wiki/F1_score)
 * A report detailing how you arrived at your predictions
