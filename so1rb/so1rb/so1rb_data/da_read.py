@@ -98,7 +98,7 @@ def da_read( fn ):
           print( repr(val), line[i] );
           raise;
 
-      yield ( id_, y, c, b, x );
+      yield ( id_, y, [c], b, x );
 
     for v in x_check.values():
       assert len( v ) > 2;

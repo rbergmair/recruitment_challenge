@@ -7,32 +7,18 @@ from so1rb.so1rb_frontend.fe import Frontend;
 class BinaryFrontend( Frontend ):
 
 
-  def __init__( self ):
+  def __init__( self, fn, mode ):
 
-    self._lenrow = None;
-    self._rowcount = 0;
+    Frontend.__init__( self, fn, mode );
+    self._max_rows = 100000;
+    
     self._stats = {};
-    self._clusters = None;
-
-
-  def __getstate__( self ):
-
-    return self._clusters;
-
-
-  def __setstate___( self, state ):
-
-    self._clusters = state;
 
 
   def train( self, row ):
 
-    if self._rowcount >= 100000:
-      return True;    
-
-    if self._lenrow is None:
-      self._lenrow = len( row );
-    assert self._lenrow == len( row );
+    if Frontend.train( self, row ):
+      return True;
 
     b = 0;
     for i in range( 0, len(row) ):
@@ -40,10 +26,6 @@ class BinaryFrontend( Frontend ):
         b |= (1<<i);
 
     self._stats[ b ] = self._stats.get( b, 0 ) + 1;
-
-    self._rowcount += 1;
-    if self._rowcount >= 100000:
-      return True;
 
     return False;
 
@@ -166,25 +148,47 @@ class BinaryFrontend( Frontend ):
     return ( left, right, rest );
 
 
-  def finalize( self ):
+  def _finalize( self ):
 
-    self._clusters = [];
+    assert Frontend._finalize( self ) is None;
+
+    self._state = [];
     rest = set( range( 0, self._lenrow ) );
 
     while rest:
       if len( rest ) >= 2:
         ( left, right, rest ) = self._split( rest );
-        self._clusters.append( left );
-        self._clusters.append( right );
+        self._state.append( left );
+        self._state.append( right );
       else:
-        self._clusters.append( rest );
+        self._state.append( rest );
         rest = set();
 
-    return;
+    if False:
 
-    for ( cluster_id, cluster ) in enumerate( self._clusters ):
-      print( "-->", cluster_id, cluster );
-      for i in cluster:
-        a = { i };
-        b = cluster - a;
-        print( "    {:d} {:1.4f}".format( i, self._i_corr( a, b ) ) );
+      for ( cluster_id, cluster ) in enumerate( self._state ):
+        print( "-->", cluster_id, cluster );
+        for i in cluster:
+          a = { i };
+          b = cluster - a;
+          print( "    {:d} {:1.4f}".format( i, self._i_corr( a, b ) ) );
+
+
+  def __call__( self, row ):
+
+    assert Frontend.__call__( self, row ) is row;
+
+    val = 0;
+    for (i,row_i) in enumerate( row ):
+      if row_i == 1:
+        val |= (1<<i);
+
+    row_ = [];
+
+    for cluster in self._state:
+      mask = 0;
+      for dim in cluster:
+        mask |= (1<<dim);
+      row_.append( val & mask );
+
+    return row_;

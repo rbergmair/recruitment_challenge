@@ -16,9 +16,11 @@ from so1rb.so1rb_frontend.fe_discretizer import FeatureDiscretizer;
 
 from so1rb.so1rb_frontend.fe_fselector import FeatureSelector;
 
+from so1rb.so1rb_model.mdl_bknn import BKNNModel;
 
 
-def step04():
+
+def step05():
 
   assert isfile( cfg.dtadir+"/train_trn_.tsv.gz" );
 
@@ -30,37 +32,33 @@ def step04():
             with CategoricalFrontend( cfg.dtadir+"/cfe.pickle", "r" ) as cfe:
               with BinaryFrontend( cfg.dtadir+"/bfe.pickle", "r" ) as bfe:
 
-                rows = da_read( cfg.dtadir+"/train_trn_.tsv.gz" );
+                mdl_ \
+                  = BKNNModel(
+                        cfg.dtadir+"/mdlp.kch", "w",
+                        cfe, bfe, hbcfe, fdp, fs
+                      );
 
-                i = 0;
+                with mdl_ as mdl:
 
-                for ( id_, y, c, b, x ) in rows:
+                  rows = da_read( cfg.dtadir+"/train_trn_.tsv.gz" );
 
-                  i += 1;
-                  print( i );
-                  if i > 100:
-                    break;
+                  i = 0;
 
-                  c = fs.apply_c( cfe( c ) );
-                  b = fs.apply_b( bfe( b ) );
+                  for ( id_, y, c, b, x ) in rows:
 
-                  xp = hbcfe( x );
-                  xq = kpcacfe( x );
+                    i += 1;
+                    # print( i );
+                    # if i > 1000:
+                    #   break;
 
-                  xp_ = fdp( xp );
-                  xq_ = fdq( xq );
-
-                  xp = fs.apply_x( xp );
-                  xp_ = fs.apply_x( xp_ );
-
-                  print ( y, c, b, xp, xp_, xq, xq_ );
-                  break;
+                    if mdl.train( ( y, c, b, x ) ):
+                      break;
 
 
 
 def main():
 
-  step04();
+  step05();
 
 
 

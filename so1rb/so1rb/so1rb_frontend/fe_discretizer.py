@@ -5,37 +5,29 @@ from pprint import pprint;
 
 from struct import pack, unpack;
 
+
 import plyvel;
 
 
+from so1rb.so1rb_frontend.fe import Frontend;
 
-class FeatureDiscretizer:
 
 
-  def __init__( self ):
+class FeatureDiscretizer( Frontend ):
 
-    self._rowcount = 0;
+
+  def __init__( self, fn, mode ):
+
+    Frontend.__init__( self, fn, mode );
+    self._max_rows = 50000;
+
     self._dbs = {};
     self._dbdirs = [];
-    self._ntile_bounds = None;
 
 
-  def __getstate__( self ):
-
-    return { "ntile_bounds": self._ntile_bounds };
-
-
-  def __setstate__( self, state ):
-
-    self.__init__();
-    self._ntile_bounds = state[ "ntile_bounds" ];
-
-
-  def __enter__( self ):
-    
-    return self;
-  
   def __exit__( self, exc_type, exc_value, traceback ):
+
+    assert Frontend.__exit__( self, exc_type, exc_value, traceback ) == False;
 
     sleep( 3.0 );
 
@@ -44,13 +36,15 @@ class FeatureDiscretizer:
     for dn in self._dbdirs:
       rmtree( dn );
 
+    return False;
 
-  def train( self, x ):
 
-    if self._rowcount >= 50000:
+  def train( self, row ):
+
+    if Frontend.train( self, row ):
       return True;
 
-    for ( i, xval ) in enumerate( x ):
+    for ( i, xval ) in enumerate( row ):
 
       if not i in self._dbs:
         dbdn = None;
@@ -77,14 +71,12 @@ class FeatureDiscretizer:
 
       self._dbs[ i ].put( xval, pack( ">I", xcnt ) );
 
-    self._rowcount += 1;
-    if self._rowcount >= 50000:
-      return True;
-
     return False;
 
 
-  def finalize( self ):
+  def _finalize( self ):
+
+    assert Frontend._finalize( self ) is None;
 
     rowids_for_ntile_bounds = [];
     for i in range( 1, 32 ):
@@ -114,11 +106,10 @@ class FeatureDiscretizer:
             if rowid_old < bound <= rowid:
               ntile_bound_by_dim[ i ].append( xval );
 
-    self._ntile_bounds = ntile_bound_by_dim;
+    self._state = ntile_bound_by_dim;
 
 
-
-  def __call__( self, row ):
+  def __call__( self, row, fold=1 ):
 
     row_ = [];
 
@@ -127,7 +118,7 @@ class FeatureDiscretizer:
       val \
         = int( float(val) * 1000.0 );
 
-      boundaries = [ None ] + self._ntile_bounds[ dim ] + [ None ];
+      boundaries = [ None ] + self._state[ dim ] + [ None ];
 
       for i in range( 0, len(boundaries)-1 ):
 
@@ -139,18 +130,18 @@ class FeatureDiscretizer:
         if lower is None:
           assert upper is not None;
           if val <= upper:
-            row_.append( i );
+            row_.append( i // fold );
             continue;
 
         if upper is None:
           assert lower is not None;
           if lower < val:
-            row_.append( i );
+            row_.append( i // fold );
             continue;
 
         if ( lower is not None ) and ( upper is not None ):
           if lower < val <= upper:
-            row_.append( i );
+            row_.append( i // fold );
             continue;
 
     return row_;

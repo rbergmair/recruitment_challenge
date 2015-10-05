@@ -1,3 +1,5 @@
+from gzip import open as gzip_open;
+
 from os.path import isfile;
 from pickle import load as pickle_load;
 from pickle import dump as pickle_dump;
@@ -20,11 +22,16 @@ from so1rb.so1rb_model.mdl_bknn import BKNNModel;
 
 
 
-def step06():
+def step06( modelf, dataf ):
 
-  with open( cfg.dtadir+"/results_train_dev.tsv", "wt" ) as outf:
+  tp = 0;
+  fp = 0;
+  tn = 0;
+  fn = 0;
 
-    outf.write( '"id"\t"y"\t"score"\n' );
+  with gzip_open( cfg.dtadir + "/results_{}".format( dataf ), "wt" ) as outf:
+
+    outf.write( '"id"\t"y"\n' );
 
     with FeatureSelector( cfg.dtadir+"/fs.pickle", "r" ) as fs:
       with FeatureDiscretizer( cfg.dtadir+"/fdp.pickle", "r" ) as fdp:
@@ -36,37 +43,67 @@ def step06():
 
                   mdl_ \
                     = BKNNModel(
-                          cfg.dtadir+"/mdlp.kch", "r",
+                          cfg.dtadir + "/" + modelf, "r",
                           cfe, bfe, hbcfe, fdp, fs
                         );
 
                   with mdl_ as mdl:
 
-                    rows = da_read( cfg.dtadir+"/train_dev.tsv.gz" );
+                    rows = da_read( cfg.dtadir + "/" + dataf );
 
                     i = 0;
 
                     for ( id_, y, c, b, x ) in rows:
 
-                      i += 1;
-                      if i >= 10000:
-                        break;
+                      #i += 1;
+                      #if i >= 50000:
+                      #  break;
 
-                      score = mdl( ( c, b, x ) );
+                      y_mdl = mdl( ( c, b, x ) );
 
                       print(
                           "{:d}".format(id_),
-                          "{:d}".format(y),
-                          "{:1.3f}".format(score),
+                          "{:d}".format(y_mdl),
                           sep = '\t',
                           file = outf
                         );
 
+                      if y is None:
+                        continue;
+
+                      if y_mdl == 1:
+                        if y == 1:
+                          tp += 1;
+                        else:
+                          assert y == 0;
+                          fp += 1;
+                      else:
+                        assert y_mdl == 0;
+                        if y == 0:
+                          tn += 1;
+                        else:
+                          fn += 1;
 
 
-def main():
+  precision = float(tp) / float(tp+fp);
+  recall = float(tp) / float(tp+fn);
+  fscore = 2.0 * ( ( precision * recall ) / ( precision + recall ) );
 
-  step06();
+  print( "fscore = {:1.4f}".format(fscore) );
+
+  print( "precision = {:1.4f}".format(precision) );
+  print( "recall = {:1.4f}".format(recall) );
+
+  print( "true_positives = {:d}".format( tp ) );
+  print( "false_positives = {:d}".format( fp ) );
+  print( "true_negatives = {:d}".format( tn ) );
+  print( "false_negatives = {:d}".format( fn ) );
+
+
+
+def main( modelf, dataf ):
+
+  step06( modelf, dataf );
 
 
 

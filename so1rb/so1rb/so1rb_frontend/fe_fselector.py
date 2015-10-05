@@ -349,12 +349,31 @@ class FeatureSelector( Frontend ):
 
     if False:
 
-      for i in range( 0, self._lenrow ):
+      for i in sorted( self._ic ):
+
         (corr,h_a,h_b,h_ab,mi) = self._ic[ i ];
+
         print(
             "{:s} {:1.4f} {:1.4f} {:1.4f} {:1.4f} {:1.4f}"\
              .format(
                   self._fmt_dim( i ),
+                  corr,
+                  h_a,
+                  h_b,
+                  h_ab,
+                  mi
+                )
+          );
+
+      for (i,j) in sorted( self._icbp ):
+
+        (corr,h_a,h_b,h_ab,mi) = self._icbp[ (i,j) ];
+
+        print(
+            "{:s} {:s} {:1.4f} {:1.4f} {:1.4f} {:1.4f} {:1.4f}"\
+             .format(
+                  self._fmt_dim( i ),
+                  self._fmt_dim( j ),
                   corr,
                   h_a,
                   h_b,
@@ -384,7 +403,10 @@ class FeatureSelector( Frontend ):
            in sorted( output_correlation, reverse=True )[ :3 ] };
 
     if False:
-      print( "core = ", " ".join([ self._fmt_dim(d) for d in self._core_dims ]) );
+      print(
+          "core = ",
+          " ".join([ self._fmt_dim(d) for d in self._core_dims ])
+        );
 
     self._satellite_dims = set();
 
@@ -414,15 +436,28 @@ class FeatureSelector( Frontend ):
           satellite_dim_stats = (corr,h_a,h_b,h_ab,mi);
 
       if satellite_dim is not None:
+
         self._satellite_dims.add( satellite_dim );      
+
         if False:
-          print( '->', self._fmt_dim(core_dim), self._fmt_dim(satellite_dim) );
+
           print(
-              "{:1.4f} {:1.4f} {:1.4f} {:1.4f} {:1.4f}".format( *(corr,h_a,h_b,h_ab,mi) )
+              '->',
+              self._fmt_dim(core_dim),
+              self._fmt_dim(satellite_dim)
+            );
+
+          print(
+              "{:1.4f} {:1.4f} {:1.4f} {:1.4f} {:1.4f}"\
+               .format( *(corr,h_a,h_b,h_ab,mi) )
             );
 
     if False:
-      print( "satellite = ", " ".join([ self._fmt_dim(d) for d in self._satellite_dims ]) );
+
+      print(
+          "satellite = ",
+          " ".join([ self._fmt_dim(d) for d in self._satellite_dims ])
+        );
 
     self._removed_dims = set();
     for i in self._ic:
@@ -430,7 +465,11 @@ class FeatureSelector( Frontend ):
         self._removed_dims.add( i );
 
     if False:
-      print( "removed = ", " ".join([ self._fmt_dim(d) for d in self._removed_dims ]) );
+
+      print(
+          "removed = ",
+          " ".join([ self._fmt_dim(d) for d in self._removed_dims ])
+        );
 
     for d_ in self._removed_dims:
       if d_ < self._len_c:

@@ -8,34 +8,20 @@ from so1rb.so1rb_frontend.fe import Frontend;
 class HomebrewContinuousFrontend( Frontend ):
 
 
-  def __init__( self ):
+  def __init__( self, fn, mode ):
 
-    self._lenrow = None;
-    self._rowcount = 0;
+    Frontend.__init__( self, fn, mode );
+    self._max_rows = 100000;
+
     self._data = [];
-    self._clusters = None;
-
-
-  def __getstate__( self ):
-
-    return self._clusters;
-
-
-  def __setstate___( self, state ):
-
-    self._clusters = state;
 
 
   def train( self, row ):
 
-    if self._rowcount >= 100000:
+    if Frontend.train( self, row ):
       return True;
 
     self._data.append( row );
-
-    self._rowcount += 1;
-    if self._rowcount >= 100000:
-      return True;
 
     return False;
 
@@ -101,7 +87,9 @@ class HomebrewContinuousFrontend( Frontend ):
     return dim_clusters;
 
 
-  def finalize( self ):
+  def _finalize( self ):
+
+    assert Frontend._finalize( self ) is None;
 
     data = np.array( self._data ).T;
 
@@ -116,7 +104,7 @@ class HomebrewContinuousFrontend( Frontend ):
       if len( rest ) == len_rest_before:
         break;
 
-    self._clusters = rest;
+    self._state = rest;
 
     if False:
 
@@ -149,3 +137,27 @@ class HomebrewContinuousFrontend( Frontend ):
           jvals = self._cluster_val( data, dcj );
           corr = np.corrcoef( ivals, jvals )[ 0 ][ 1 ];
           print( i, j, corr );
+
+
+  def __call__( self, row ):
+
+    assert Frontend.__call__( self, row ) is row;
+
+    row_ = [];
+
+    for cluster in self._state:
+
+      val = 0.0;
+
+      for dim in cluster:
+        if dim > 0:
+          val += row[dim];
+        else:
+          assert dim < 0;
+          val -= row[dim];
+
+      val /= len(cluster);
+
+      row_.append( val );
+
+    return row_;

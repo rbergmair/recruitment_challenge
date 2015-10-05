@@ -5,6 +5,12 @@ from pickle import dump as pickle_dump;
 from so1rb import cfg;
 
 from so1rb.so1rb_data.da_read import da_read;
+
+from so1rb.so1rb_frontend.fe_binary import BinaryFrontend;
+from so1rb.so1rb_frontend.fe_categorical import CategoricalFrontend;
+from so1rb.so1rb_frontend.fe_continuous_homebrew import HomebrewContinuousFrontend;
+from so1rb.so1rb_frontend.fe_continuous_kpca import KPCAContinuousFrontend;
+
 from so1rb.so1rb_frontend.fe_discretizer import FeatureDiscretizer;
 
 
@@ -12,24 +18,12 @@ def step03():
 
   assert isfile( cfg.dtadir+"/train_trn_.tsv.gz" );
 
-  with open( cfg.dtadir+"/bfe.pickle", "rb" ) as f:
-    bfe_ = pickle_load( f );
-
-  with open( cfg.dtadir+"/cfe.pickle", "rb" ) as f:
-    cfe_ = pickle_load( f );
-
-  with open( cfg.dtadir+"/hbcfe.pickle", "rb" ) as f:
-    hbcfe_ = pickle_load( f );
-
-  with open( cfg.dtadir+"/kpcacfe.pickle", "rb" ) as f:
-    kpcacfe_ = pickle_load( f );
-
-  with FeatureDiscretizer() as fdp:
-    with FeatureDiscretizer() as fdq:
-      with bfe_ as bfe:
-        with cfe_ as cfe:
-          with hbcfe_ as hbcfe:
-            with kpcacfe_ as kpcacfe:
+  with FeatureDiscretizer( cfg.dtadir+"/fdp.pickle", "w" ) as fdp:
+    with FeatureDiscretizer( cfg.dtadir+"/fdq.pickle", "w" ) as fdq:
+      with KPCAContinuousFrontend( cfg.dtadir+"/kpcacfe.pickle", "r" ) as kpcacfe:
+        with HomebrewContinuousFrontend( cfg.dtadir+"/hbcfe.pickle", "r" ) as hbcfe:
+          with CategoricalFrontend( cfg.dtadir+"/cfe.pickle", "r" ) as cfe:
+            with BinaryFrontend( cfg.dtadir+"/bfe.pickle", "r" ) as bfe:
 
               rows = da_read( cfg.dtadir+"/train_trn_.tsv.gz" );
 
@@ -39,6 +33,8 @@ def step03():
 
                 i += 1;
                 # print( i );
+                # if i >= 100:
+                #   break;
                 
                 c = cfe( c );
                 b = bfe( b );
@@ -51,15 +47,6 @@ def step03():
 
                 if all( is_enough ):
                   break;
-
-              fdp.finalize();
-              fdq.finalize();
-
-              with open( cfg.dtadir+"/fdp.pickle", "wb" ) as f:
-                pickle_dump( fdp, f );
-
-              with open( cfg.dtadir+"/fdq.pickle", "wb" ) as f:
-                pickle_dump( fdq, f );
 
 
 

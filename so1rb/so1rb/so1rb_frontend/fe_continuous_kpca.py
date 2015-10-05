@@ -8,39 +8,33 @@ from so1rb.so1rb_frontend.fe import Frontend;
 class KPCAContinuousFrontend( Frontend ):
 
 
-  def __init__( self ):
+  def __init__( self, fn, mode ):
 
-    self._lenrow = None;
-    self._rowcount = 0;
+    Frontend.__init__( self, fn, mode );
+    self._max_rows = 50000;
+
     self._data = [];
-    self._kpca = None;
-
-
-  def __getstate__( self ):
-
-    return self._kpca;
-
-
-  def __setstate___( self, state ):
-
-    self._kpca = state;
 
 
   def train( self, row ):
 
-    if self._rowcount >= 50000:
+    if Frontend.train( self, row ):
       return True;
 
     self._data.append( row );
 
-    self._rowcount += 1;
-    if self._rowcount >= 50000:
-      return True;
-
     return False;
 
 
-  def finalize( self ):
+  def _finalize( self ):
 
-    self._kpca = KernelPCA( n_components=3, kernel='cosine' );
-    self._kpca.fit( np.array( self._data ) );
+    assert Frontend._finalize( self ) is None;
+
+    self._state = KernelPCA( n_components=3, kernel='cosine' );
+    self._state.fit( np.array( self._data ) );
+
+
+  def __call__( self, row ):
+
+    assert Frontend.__call__( self, row ) is row;
+    return list( self._state.transform( row )[ 0 ] );

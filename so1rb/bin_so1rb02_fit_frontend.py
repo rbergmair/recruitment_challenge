@@ -1,3 +1,4 @@
+from os.path import isfile;
 from pickle import dump as pickle_dump;
 
 from so1rb import cfg;
@@ -15,37 +16,30 @@ def step02():
 
   assert isfile( cfg.dtadir+"/train_trn_.tsv.gz" );
 
-  with KPCAContinuousFrontend() as kpcacfe:
-    with HomebrewContinuousFrontend() as hbcfe:
-      with CategoricalFrontend() as cfe:
-        with BinaryFrontend() as bfe:
+  with KPCAContinuousFrontend( cfg.dtadir+"/kpcacfe.pickle", "w" ) as kpcacfe:
+    with HomebrewContinuousFrontend( cfg.dtadir+"/hbcfe.pickle", "w" ) as hbcfe:
+      with CategoricalFrontend( cfg.dtadir+"/cfe.pickle", "w" ) as cfe:
+        with BinaryFrontend( cfg.dtadir+"/bfe.pickle", "w" ) as bfe:
 
-          for ( id_, y, c, b, x ) in da_read( cfg.dtadir+"/train_trn_.tsv.gz" ):
+          rows = da_read( cfg.dtadir+"/train_trn_.tsv.gz" );
+
+          i = 0;
+
+          for ( id_, y, c, b, x ) in rows:
+
+            i += 1;
+            # print( i );
+            # if i >= 100:
+            #   break;
 
             is_enough = [];
             is_enough.append( bfe.train( b ) );
             is_enough.append( cfe.train( [c] ) );
             is_enough.append( hbcfe.train( x ) );
             is_enough.append( kpcacfe.train( x ) );
+
             if all( is_enough ):
               break;
-
-          bfe.finalize();
-          cfe.finalize();
-          hbcfe.finalize();
-          kpcacfe.finalize();
-
-          with open( cfg.dtadir+"/bfe.pickle", "wb" ) as f:
-            pickle_dump( bfe, f );
-
-          with open( cfg.dtadir+"/cfe.pickle", "wb" ) as f:
-            pickle_dump( cfe, f );
-
-          with open( cfg.dtadir+"/hbcfe.pickle", "wb" ) as f:
-            pickle_dump( hbcfe, f );
-
-          with open( cfg.dtadir+"/kpcacfe.pickle", "wb" ) as f:
-            pickle_dump( kpcacfe, f );
 
 
 
