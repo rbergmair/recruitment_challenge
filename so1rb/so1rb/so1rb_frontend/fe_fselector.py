@@ -49,6 +49,10 @@ class FeatureSelector( Frontend ):
     self._remove_b = set();
     self._remove_x = set();
 
+    self.bypass_c = False;
+    self.bypass_b = False;
+    self.bypass_x = False;
+
 
   def __enter__( self ):
 
@@ -484,6 +488,9 @@ class FeatureSelector( Frontend ):
 
   def apply_c( self, c ):
 
+    if self.bypass_c:
+      return c;
+
     if self._needs_initialization:
       self._init();
 
@@ -496,6 +503,9 @@ class FeatureSelector( Frontend ):
 
   def apply_b( self, b ):
 
+    if self.bypass_b:
+      return b;
+
     if self._needs_initialization:
       self._init();
 
@@ -507,6 +517,9 @@ class FeatureSelector( Frontend ):
 
 
   def apply_x( self, x ):
+
+    if self.bypass_x:
+      return x;
 
     if self._needs_initialization:
       self._init();

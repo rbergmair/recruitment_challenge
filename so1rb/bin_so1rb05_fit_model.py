@@ -20,7 +20,7 @@ from so1rb.so1rb_model.mdl_bknn import BKNNModel;
 
 
 
-def step05():
+def step05( modelf ):
 
   assert isfile( cfg.dtadir+"/train_trn_.tsv.gz" );
 
@@ -32,11 +32,23 @@ def step05():
             with CategoricalFrontend( cfg.dtadir+"/cfe.pickle", "r" ) as cfe:
               with BinaryFrontend( cfg.dtadir+"/bfe.pickle", "r" ) as bfe:
 
-                mdl_ \
-                  = BKNNModel(
-                        cfg.dtadir+"/mdlp.kch", "w",
-                        cfe, bfe, hbcfe, fdp, fs
-                      );
+                if modelf == "mdlp.kch":
+
+                  mdl_ \
+                    = BKNNModel(
+                          cfg.dtadir+"/"+modelf, "w",
+                          cfe, bfe, hbcfe, fdp, fs, 7
+                        );
+
+                elif modelf == "mdlq.kch":
+
+                  fs.bypass_x = True;
+
+                  mdl_ \
+                    = BKNNModel(
+                          cfg.dtadir+"/"+modelf, "w",
+                          cfe, bfe, kpcacfe, fdq, fs, 7
+                        );
 
                 with mdl_ as mdl:
 
@@ -47,18 +59,18 @@ def step05():
                   for ( id_, y, c, b, x ) in rows:
 
                     i += 1;
-                    # print( i );
-                    # if i > 1000:
-                    #   break;
+                    #print( i );
+                    #if i > 10000:
+                    #  break;
 
                     if mdl.train( ( y, c, b, x ) ):
                       break;
 
 
 
-def main():
+def main( modelf ):
 
-  step05();
+  step05( modelf );
 
 
 

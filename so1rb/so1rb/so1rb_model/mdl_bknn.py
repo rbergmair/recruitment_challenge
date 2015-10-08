@@ -19,16 +19,17 @@ from so1rb.so1rb_model.mdl import Model;
 
 
 SMOOTHING = 0.33;
-KVAL = 7;
 
 
 
 class BKNNModel( Model ):
 
 
-  def __init__( self, fn, mode, catfe, binfe, contfe, fdisc, fsel ):
+  def __init__( self, fn, mode, catfe, binfe, contfe, fdisc, fsel, kval ):
 
     Model.__init__( self, fn, mode, catfe, binfe, contfe, fdisc, fsel );
+
+    self._kval = kval;
 
     self._fn_cdata = self._fn;
     self._fn_ddata = self._fn.replace( '.kch', '-discrete.kch' );
@@ -404,22 +405,26 @@ class BKNNModel( Model ):
 
         nearest_positive.append( dist );
         nearest_positive.sort();
-        nearest_positive = nearest_positive[:KVAL];
+        nearest_positive = nearest_positive[:self._kval];
 
     # assert found_ident == 1;
-    # assert len( nearest_positive ) == KVAL;
-    if len( nearest_positive ) < KVAL:
+    # assert len( nearest_positive ) == self._kval;
+    if len( nearest_positive ) < self._kval:
       self._sparse_points += 1;
 
     score = self._bias;
 
-    if len( nearest_positive ) > 0:
+    # if len( nearest_positive ) > 0:
+    if True:
 
-      threshold = nearest_positive[-1];
+      if len( nearest_positive ) == 0:
+        threshold = None;
+      else:
+        threshold = nearest_positive[-1];
 
       neg_cnt = 0;
       for dist in all_negative:
-        if dist <= threshold:
+        if ( threshold is None ) or ( dist <= threshold ):
           neg_cnt += 1;
 
       p_pos \
@@ -505,8 +510,18 @@ class BKNNModel( Model ):
       tn = stats_by_co[ coidx ][ "tn" ];
       fn = stats_by_co[ coidx ][ "fn" ];
 
+      if (tp+fp) <= 0:
+        continue;
+
+      if (tp+fn) <= 0:
+        continue;
+
       precision = float(tp) / float(tp+fp);
       recall = float(tp) / float(tp+fn);
+
+      if (precision+recall) <= 0.0:
+        continue;
+
       fscore = 2.0 * ( ( precision * recall ) / ( precision + recall ) );
 
       if ( max_fscore is None ) or ( fscore > max_fscore ):
@@ -517,9 +532,10 @@ class BKNNModel( Model ):
     assert max_fscore_coidx is not None;
     self._co = cutoffs[ max_fscore_coidx ];
 
-    assert self._sparse_points == 0;
+    # assert self._sparse_points == 0;
 
-    if False:
+    if True:
+      print( self._sparse_points );
       print( self._co );
       print( max_fscore );
 
@@ -537,9 +553,13 @@ class BKNNModel( Model ):
     x = self._fsel.apply_x( x );
     x_ = self._fsel.apply_x( x_ );
 
-    assert self._len_c == len(c);
-    assert self._len_b == len(b);
-    assert self._len_x == len(x);
-    assert self._len_x == len(x_);
+    try:
+      assert self._len_c == len(c);
+      assert self._len_b == len(b);
+      assert self._len_x == len(x);
+      assert self._len_x == len(x_);
+    except:
+      print( self._len_c, self._len_b, self._len_x );
+      raise;
 
     return self._apply( ( c, b, x, x_ ) );

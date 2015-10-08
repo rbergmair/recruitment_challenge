@@ -29,7 +29,9 @@ def step06( modelf, dataf ):
   tn = 0;
   fn = 0;
 
-  with gzip_open( cfg.dtadir + "/results_{}".format( dataf ), "wt" ) as outf:
+  modelf_ = modelf.replace( '.kch', '' );
+
+  with gzip_open( cfg.dtadir + "/results_{}_{}".format( modelf_, dataf ), "wt" ) as outf:
 
     outf.write( '"id"\t"y"\n' );
 
@@ -41,11 +43,23 @@ def step06( modelf, dataf ):
               with CategoricalFrontend( cfg.dtadir+"/cfe.pickle", "r" ) as cfe:
                 with BinaryFrontend( cfg.dtadir+"/bfe.pickle", "r" ) as bfe:
 
-                  mdl_ \
-                    = BKNNModel(
-                          cfg.dtadir + "/" + modelf, "r",
-                          cfe, bfe, hbcfe, fdp, fs
-                        );
+                  if modelf == "mdlp.kch":
+
+                    mdl_ \
+                      = BKNNModel(
+                            cfg.dtadir + "/" + modelf, "r",
+                            cfe, bfe, hbcfe, fdp, fs, 7
+                          );
+
+                  elif modelf == "mdlq.kch":
+
+                    fs.bypass_x = True;
+
+                    mdl_ \
+                      = BKNNModel(
+                            cfg.dtadir+"/"+modelf, "r",
+                            cfe, bfe, kpcacfe, fdq, fs, 7
+                          );
 
                   with mdl_ as mdl:
 
@@ -55,9 +69,11 @@ def step06( modelf, dataf ):
 
                     for ( id_, y, c, b, x ) in rows:
 
-                      #i += 1;
-                      #if i >= 50000:
-                      #  break;
+                      i += 1;
+                      if i >= 50000:
+                        break;
+
+                      # print( y, c, b, x );
 
                       y_mdl = mdl( ( c, b, x ) );
 
