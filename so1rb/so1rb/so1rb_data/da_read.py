@@ -21,10 +21,25 @@ def da_read( fn ):
       firstline = firstline[:-1];
     firstline = firstline.split( '\t' );
 
-    assert \
-         firstline \
-      == (   [ '"id"', '"y"', '"cId"' ]
-           + [ '"x{}"'.format(i) for i in range(1,101) ] );
+    has_y = None;
+
+    if firstline[:3] == [ '"id"', '"y"', '"cId"' ]:
+      has_y = True;
+    elif firstline[:3] == [ '"id"', '"cId"', '"x1"' ]:    
+      has_y = False;
+    else:
+      assert False;
+
+    if has_y:
+      assert \
+           firstline \
+        == (   [ '"id"', '"y"', '"cId"' ]
+             + [ '"x{}"'.format(i) for i in range(1,101) ] );
+    else:
+      assert \
+           firstline \
+        == (   [ '"id"', '"cId"' ]
+             + [ '"x{}"'.format(i) for i in range(1,101) ] );
 
     x_check = {};
 
@@ -37,11 +52,15 @@ def da_read( fn ):
       id_ = line[0];
       id_ = int( id_ );
 
-      y = line[1];
-      assert y in [ "0", "1" ];
-      y = int( y );
+      if has_y:
+        y = line[1];
+        assert y in [ "0", "1" ];
+        y = int( y );
+        rest = line[2:];
+      else:
+        rest = line[1:];
 
-      c = line[2];
+      c = rest[0];
 
       assert c[0] == '"';
       assert c[-1] == '"';
@@ -50,13 +69,13 @@ def da_read( fn ):
       b = [];
       x = [];
 
-      for i in range( 3, len(line) ):
+      for i in range( 1, len(rest) ):
 
         try:
 
-          val = line[i];
+          val = rest[i];
 
-          if (i-2) in BINARY_FEATs:
+          if i in BINARY_FEATs:
 
             assert val in [ "0", "1" ];
             val = int(val)
@@ -84,7 +103,7 @@ def da_read( fn ):
           else:
             val = int( val[0] ) * 1000 + int( val[1] );          
 
-          assert ( float(val) / 1000.0 ) == float(line[i]);
+          assert ( float(val) / 1000.0 ) == float(rest[i]);
 
           x_check_ = x_check.get( i, set() );
           if len( x_check_ ) < 3:
@@ -95,10 +114,13 @@ def da_read( fn ):
 
         except:
 
-          print( repr(val), line[i] );
+          print( repr(val), rest[i] );
           raise;
 
-      yield ( id_, y, [c], b, x );
+      if has_y:
+        yield ( id_, y, [c], b, x );
+      else:
+        yield ( id_, None, [c], b, x );
 
     for v in x_check.values():
       assert len( v ) > 2;

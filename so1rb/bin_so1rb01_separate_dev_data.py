@@ -14,13 +14,13 @@ import so1rb.cfg as cfg;
 
 def step01():
 
-  if not isfile( cfg.dtadir+"/train_trn.tsv.gz" ):
+  if not isfile( cfg.dtadir+"/train_trn_.tsv.gz" ):
 
     assert isfile( cfg.dtadir+"/train.tsv.gz" );
-    assert not isfile( cfg.dtadir+"/train_trn.tsv.gz" );
+    assert not isfile( cfg.dtadir+"/train_trn_.tsv.gz" );
     assert not isfile( cfg.dtadir+"/train_dev.tsv.gz" );
 
-    with gzip_open( cfg.dtadir+"/train_trn.tsv.gz", "wt" ) as trn:
+    with gzip_open( cfg.dtadir+"/train_trn_.tsv.gz", "wt" ) as trn:
       with gzip_open( cfg.dtadir+"/train_dev.tsv.gz", "wt" ) as dev:
         with gzip_open( cfg.dtadir+"/train.tsv.gz", "rt" ) as f:
 
@@ -44,15 +44,15 @@ def step01():
             else:
               trn.write( line );
 
-  if isfile( cfg.dtadir+"/train_trn_.tsv.gz" ):
+  if isfile( cfg.dtadir+"/train_trn.tsv.gz" ):
     return;
 
   dbdn = None;
   with TemporaryDirectory() as tmpdirname:
     dbdn = tmpdirname;
 
-  with gzip_open( cfg.dtadir+"/train_trn_.tsv.gz", "wt" ) as fout:
-    with gzip_open( cfg.dtadir+"/train_trn.tsv.gz", "rt" ) as fin:
+  with gzip_open( cfg.dtadir+"/train_trn.tsv.gz", "wt" ) as fout:
+    with gzip_open( cfg.dtadir+"/train_trn_.tsv.gz", "rt" ) as fin:
 
         firstline = fin.readline();
 

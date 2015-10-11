@@ -70,8 +70,8 @@ def step06( modelf, dataf ):
                     for ( id_, y, c, b, x ) in rows:
 
                       i += 1;
-                      if i >= 50000:
-                        break;
+                      #if i >= 50000:
+                      #  break;
 
                       # print( y, c, b, x );
 
@@ -100,7 +100,9 @@ def step06( modelf, dataf ):
                         else:
                           fn += 1;
 
-
+  if ( tp+fp+tn+fn ) == 0:
+    return;
+  
   precision = float(tp) / float(tp+fp);
   recall = float(tp) / float(tp+fn);
   fscore = 2.0 * ( ( precision * recall ) / ( precision + recall ) );

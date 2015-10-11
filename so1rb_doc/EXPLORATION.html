@@ -23,26 +23,121 @@ Dr Richard Bergmair
   </p>
   <p class="date">Oct-10 2015</p>
 </div>
-<div id="separate-development-data" class="slide section level1">
-<h1>1: Separate Development Data</h1>
+<div id="about-this-document" class="slide section level1">
+<h1>0: About This Document</h1>
 <ul>
-<li>I took the training data that I was provided, and split it into an 85% portion for actual training data, and a 15% portion for development data. – Henceforth, when I say training data, this 85% portion is what I will be referring to.</li>
-<li>Throughout the rest of the exploration stage of the process as described in this document, I only look at training data. This allows me to use the development data to get a sense of where my evaluation measure is likely to end up when I submit the results for use on the actual test data, without <a href="https://en.wikipedia.org/wiki/Data_dredging">data snooping bias</a> creeping into that estimate. (Also see <a href="http://www.utopia-refraktor.com/en/blog/tech-talks/machine-learning/2015/01/evaluation-methodology">my video lecture on methodology</a>).</li>
-<li>Drink coffee</li>
+<li>There is another document (<code>SOLUTION</code>) which describes my solution to the SO1 algorithm challenge. The present document (<code>EXPLORATION</code>) describes the thought process that got me to that solution. This is the part that usually people aren’t interested in. So if you’re not, stop reading this, and refer to the other document.</li>
+<li>The code that goes with this thought process is under <code>so1rb_explore</code>.</li>
+<li>I’ve decided to do this in the form of a slide show, so I can walk you through it, one idea at a time, using a flat structure, and associating images with individual ideas.</li>
+<li>If I were actually called upon to do a presentation, this is not how I would normally structure a slide show. – Way too much text etc.</li>
 </ul>
 </div>
-<div id="in-the-evening" class="slide section level1">
-<h1>In the evening</h1>
+<div id="i-separated-out-some-development-data" class="slide section level1">
+<h1>1: I Separated Out Some Development Data</h1>
 <ul>
-<li>Eat spaghetti</li>
-<li>Drink wine</li>
+<li>I took the training data that I was provided, and split it into an 85% portion for actual training data, and a 15% portion for development data. – Henceforth, when I say training data, or make no explicit statement at all as to which portion of the data I’m talking about, this 85% portion is what I will be referring to.</li>
+<li>Throughout the rest of the exploration stage of the process as described in this document, I only look at training data. This allows me to use the development data later on to get a sense of where my evaluation measure is likely to end up when I submit the results for use on the actual test data, while keeping <a href="https://en.wikipedia.org/wiki/Data_dredging">data snooping bias</a> to a minimum. (Also see <a href="http://www.utopia-refraktor.com/en/blog/tech-talks/machine-learning/2015/01/evaluation-methodology">my video lecture on methodology</a>).</li>
+<li>It seems that, with this example project, we’re in the situation of having plenty of data, although that is obviously a very relative term. – relative to the phenomena in the data that you’re trying to capture and the data complexity they imply.</li>
+<li>In a project where data is rather on the scarce side, I wouldn’t give up on 15% of the data so easily. I would then just use the entire training data for exploration, as long as I only use it to look at stuff, rather than to select a model from a large model space. In order to get an estimate of the ultimate performance, I would then use cross-validation.</li>
+<li>As part of my very initial step of processing the data, I find it useful to reshuffle the data using a random-number generator.</li>
+<li>Running exploration scrips on the entirety of the data can often take a long time, which is a drag on my productivity, especially in the exploration stage. So I often end up putting a <code>break</code> statement into the loop reading the data, so as to stop reading after a large enough dataset has been read in.</li>
+<li>This, obviously, is bound to go horribly wrong if the dataset came out of a database dump, for example, where the ordering of the data could be an artefact of the indexing structure or the insertion order, and you end up looking not at a random sample, but rather at only old data, or only data where certain columns have certain values, etc.</li>
+<li>So it’s better to just reshuffle, and be on the safe side.</li>
 </ul>
 </div>
-<div id="conclusion" class="slide section level1">
-<h1>Conclusion</h1>
+<div id="whats-this-cid-thing" class="slide section level1">
+<h1>2: What’s This <code>cid</code> thing?</h1>
 <ul>
-<li>And the answer is…</li>
-<li><span class="math">\(f(x)=\sum_{n=0}^\infty\frac{f^{(n)}(a)}{n!}(x-a)^n\)</span></li>
+<li>Since this <code>cid</code> column is the only one that, at very first sight, stands out, I started by counting the number of positive datapoints, and the total number of datapoints associated with each value for <code>cid</code>.</li>
+<li>By a positive datapoint, I mean a line in the CSV file with <span class="math">\(\mathtt{y} = 1\)</span>.</li>
+<li>It turns out that <code>cid</code> can take on 50 different values, from 1 to 50.</li>
+<li>They are very unevenly populated, with <span class="math">\(\mathtt{cid} = 16\)</span> appearing 87 times and <span class="math">\(\mathtt{cid} = 3\)</span> appearing 26477 times.</li>
+<li>They imply different distributions for positive vs negative datapoints. For example <span class="math">\(\mathtt{cid} = 50\)</span> has 11.65% positives, while <span class="math">\(\mathtt{cid} = 16\)</span> only has 2.5% positives, so it seems quite relevant to the dependent variable.</li>
+<li>Neither the total number of data points, nor the proportion of positives seems to be an obvious function <code>cid</code>, neither its ordinal nor its cardinal value, so I’ll treat it as a discrete symbol, rather than as a numeric value.</li>
+<li>It’s important to make a conscious decision on that one: For example, if you’re working on a database dump, and the data contains information about cars, then there could be a column <code>car_type</code>, where value 101 means motorcycle, value 42 means sedan, value 3 means mini truck, and value 7 means a tractor unit for a road train. Another column could be <code>horsepower</code>, which would also be a number. Now, you could easily use <code>horsepower</code> as an ordinal or cardinal number, perhaps as a feature in a linear discriminant, but it would be complete nonsense to do this, with <code>car_type</code>, despite the fact that both of them, prima facie, look like numbers. This is a common rookie mistake.</li>
+<li>Another thing that’s noteworthy here, is that the proportion of positives never crosses the 50% boundary. If there were values for <span class="math">\(\mathtt{cid}\)</span> above and below 50%, then that would in and of itself imply a classifier that can improve over baseline in terms of accuracy, by looking at <span class="math">\(\mathtt{cid}\)</span> and nothing else. But unfortunately, that’s not the case here.</li>
+</ul>
+</div>
+<div id="looking-into-those-mathttxs-by-way-of-plot." class="slide section level1">
+<h1>3: Looking Into Those <span class="math">\(\mathtt{x}\)</span>’s By Way Of Plot.</h1>
+<div class="figure">
+<img src="step03.png" />
+</div>
+<ul>
+<li><p>I picked two of those categories at random, in this case categories 8 and 42.</p></li>
+<li><p>I picked four of the <span class="math">\(\mathtt{x}\)</span>’s at randdom, in this case <span class="math">\(\mathtt{x}_1\)</span>, <span class="math">\(\mathtt{x}_2\)</span>, <span class="math">\(\mathtt{x}_{99}\)</span>, and <span class="math">\(\mathtt{x}_{100}\)</span></p></li>
+<li><p>The rows, from top to bottom are <span class="math">\(\mathtt{x}_1\)</span> vs <span class="math">\(\mathtt{x}_2\)</span>, <span class="math">\(\mathtt{x}_1\)</span> vs <span class="math">\(\mathtt{x}_{99}\)</span>, <span class="math">\(\mathtt{x}_1\)</span> vs <span class="math">\(\mathtt{x}_{100}\)</span>, <span class="math">\(\mathtt{x}_2\)</span> vs <span class="math">\(\mathtt{x}_{100}\)</span>, and <span class="math">\(\mathtt{x}_{99}\)</span> vs <span class="math">\(\mathtt{x}_{100}\)</span>,</p></li>
+<li><p>The left-hand column shows datapoints with <span class="math">\(\mathtt{cid} = 8\)</span>, the right-hand column shows datapoints with <span class="math">\(\mathtt{cid} = 42\)</span>.</p></li>
+<li>This plot visualizes a number of phenomena:
+<ul>
+<li>distributions of points along some individual dimensions</li>
+<li>correlations between some pairs of dimensions</li>
+<li>check on whether these behave the same or differently for two different values for <span class="math">\(\mathtt{cid}\)</span>.</li>
+</ul></li>
+<li>At this stage, I’m trying to start forming some opinons on where in my model I can or cannot make various kinds of independence assumptions. There are three kinds of independence:
+<ul>
+<li>logical independence (logic and possibility theory)</li>
+<li>stochastic independence (probability theory)</li>
+<li>linear independence (absence of correlation in statistics)</li>
+</ul></li>
+<li><p>At this stage, I’m primarily interested in logical dependencies, as well as the logical structure behind stochastic and linear dependencies, because these are the kinds of things that dictate design choices that need to be made at an early stage.</p></li>
+<li><p>For example: the horsepower of a heavy truck as applied to a motorcycle is a logical impossibility. I’ve had cases like that in data science projects in the past, and have approached them by splitting out variables, one variable representing the horsepower of a truck, with value null if the thing isn’t a truck, the other variable representing the horsepower of a motorcycle, with value null if it’s not a motorcycle. – This yields a model that makes apples-to-apples comparisons. Otherwise the horsepower column would become to a large extent a proxy for the distinction between motorcycle and truck, which, however, needs to be treated as a separate piece of information. – If there’s a need to do this kind of feature engineering, it’s important<br /> to know about it early on.</p></li>
+<li>At some point, this classifier will need to be able to combine evidence from the discrete variable with evindence from the continuous variables. There are two ways of going about this:
+<ul>
+<li>One could treat them as logically dependent, meaning that you would train one model that captures the continuous variables and that applies only to datapoints with, say <span class="math">\(\mathtt{cid} = 8\)</span>, and a completely separate model that applies only to datapoints with, say <span class="math">\(\mathtt{cid} = 42\)</span>.</li>
+<li>One could treat them as logically independent, so that you train some model on all data, ignoring the <span class="math">\(\mathtt{cid}\)</span> value, and then integrate the evidence from <span class="math">\(\mathtt{cid}\)</span> by merely shifting a decision threshold or a bias term, or something like that. Consider two examples:</li>
+<li>You have a database of wine sales, with a categorical variable <code>audience</code>, which can take on values of <code>preppie</code> and <code>wino</code>. You might find a positive correlation between price and sales among preppies, but a negative correlation among winos. In such a case you would treat price and sales as logically dependent on audience.</li>
+<li>You have a database of horses, with a categorical variable <code>color</code> and some variables <code>height</code> and <code>weight</code>. You might find that <code>color</code> does not affect the relationship between the other variables substantially, in the sense that, by just ignoring <code>color</code> and looking at all data all at once, you’re still looking at a sample that is homogeneously behaved when it comes to describing the relationship between <code>height</code> and weight. So you would treat those as logically independent. Again, this distinction is a distinction you would want to know about early on in the process. If there’s a logical dependency you want to make sure, you’re looking at statistically homogeneous subsets of the data as you go around exploring it.</li>
+</ul></li>
+<li><p>Based on this plot, I can’t see any examples of <span class="math">\(\mathtt{cid}\)</span> inducing logical dependencies, so I will proceed under the assumption that there aren’t any, but I make a mental note to keep verifying this, since I’m only looking at a few examples here, and it’s very possible that there are logical dependencies that I’ve simply missed.</p></li>
+<li><p>The plots show that some pairs of continuous dimensions are correlated as is the case with <span class="math">\(\mathtt{x}_1\)</span> vs <span class="math">\(\mathtt{x}_2\)</span>, whereas others aren’t. I make a mental note of that.</p></li>
+<li><p>The second and fifth row clearly exhibit a noteworthy phenomenon: These are actually binary features!</p></li>
+<li><p>If I had been really lucky here, some of those plots would have already displayed the positives and negatives in different regions of the space, implying the possibility of separation. Unfortunately, in all the examples displayed here, the positives seem firmly embedded inside the negatives, and there is no obvious way here to separate them.</p></li>
+</ul>
+</div>
+<div id="discretization-test" class="slide section level1">
+<h1>4: Discretization Test</h1>
+<ul>
+<li>So, let’s sort out these binary features then.</li>
+<li>There’s a bigger phenomenon possibly at play here, which is discretization.</li>
+<li>Thinking of our road vehicle database again: There could be a feature such as <code>number_of_doors</code>, which permits only a fairly small range of integer possibilities. This would probably induce a qualitiative rather than a quantitative distinction, so one would have to think about whether to treat each discretized variable as a discrete symbol or as a numeric value, etc.</li>
+<li>So I wrote a script, which, for each of the <span class="math">\(\mathtt{x}\)</span>’s records its unique values, stopping the recording after having seen 500 different values. It then outputs the number of unique values seen for each dimension, including, for dimensions with fewer than 5 values, the actual values themselves.</li>
+<li>It turns out that there is a set of 30 binary features.</li>
+<li>Among the remaining 70, they all have more than 500 distinct values, so none of them exhibit any signs of quantizatin or discretization, and can therefore be treated as continuous and numeric in nature.</li>
+</ul>
+</div>
+<div id="logical-dependencies-among-binary-features" class="slide section level1">
+<h1>5: Logical Dependencies Among Binary Features</h1>
+<ul>
+<li>Having made this discovery that there are 30 binary features in the data, the next thing to do is to look for logical dependencies among them.</li>
+<li>If they were logically independent, there would be <span class="math">\(2^{30} \approx 1\mathrm{G}\)</span> different combinations. Obviously they can’t all be exhibited in a dataset of only <span class="math">\(\approx 850\mathrm{k}\)</span> datapoints, but you would still expect a whole lot of combinations to show up.</li>
+<li>If there were logical dependencies among them, then that number could be a lot smaller.</li>
+<li>So, I wrote a script to count the number of unique combinations of values for binary features, and it turns out that there are only 367.</li>
+<li>This means that the binary features are strongly constrained by a rich set of logical dependencies that exist among them. So I make a mental note of that.</li>
+<li>I also tried this in combination with <span class="math">\(\mathtt{cid}\)</span>. With 367 values for the binary features, and 50 values for <span class="math">\(\mathtt{cid}\)</span>, you’d expect <span class="math">\(50 * 367 = 18350\)</span> combinations, and the script has actually seen <span class="math">\(18349\)</span> of those, so <span class="math">\(\mathtt{cid}\)</span> does not seem to participate in the system of pairwise mutual dependencies that exist among the binary features, but rather seems logically independent.</li>
+<li>It’s perfectly possible that, among those 367 combinations of values for the binary features, there’s further internal structure. For example if there were a binary feature that was nearly independent of the others, it might well be that the 367 combinations break apart into a set of 183 combinations for the other features, plus the value zero for the independent one, plus a set of 184 combinations for the other features, plus the value one for the independent one. But for now, I don’t yet need to know all of that in detail.</li>
+<li>As before in step 2, I looked at the total number of datapoints obtained for each combination, as well as the ratio of positives, and am finding that the numbers vary wildly. This implies that the binary features do have positive information content with regard to the dependent variable <span class="math">\(\mathrm{y}\)</span>.</li>
+<li>But, again, the ratio of positives, even for these fine-grained combinations of binary feature values never crosses the 50%-line, except for very very small cells. So there isn’t yet an obvious way to construct a classifier here.</li>
+<li>The script operates by representing each combination of binary features in a single integer, using some bit-arithmetic. I use hex numbers to then display that integer.</li>
+<li>Interestingly, it is the combination of binary features equalling <code>0x3fffffff</code>, i.e. the combination for which every binary feature has value one, which has the largest total number of datapoints in it (that number being 7278).</li>
+<li>One can further combine that with the category, to obtain the combination with category <span class="math">\(14\)</span> (denoted <code>0xe.0x3fffffff</code>) as the most frequent one.</li>
+<li>The combination <code>0x3fffffff</code> also exhibits a fairly high density of positive datapoints, at 10%. Only one other combination has an even higher density of positives. That is <code>0x3dfe7f5f</code>, which as 12%.</li>
+<li>It might well be that every one of the binary features, more or less, has the effect of accumulating additional evidence in support of a positive decision. I’ll make a mental note of that. The Bayesian method should be able to assign weights appropriately.</li>
+<li>In combination with category values, the density of positives can go even higher: <code>0xe.0x3fffffff</code> has as many as 16% (total number of data points 396).</li>
+<li>Combination <code>0x18.0x1fd57fcf</code> has as many as 50% positives, but is only thinly populated (10 data points).</li>
+<li>So, I should look at those in more detail.</li>
+</ul>
+</div>
+<div id="another-plot-seems-called-for" class="slide section level1">
+<h1>6: Another Plot Seems Called for</h1>
+<div class="figure">
+<img src="step06.png" />
+</div>
+<ul>
+<li>So, I re-did the Plot from Step 3, this time removing the binary features, and looking at combination <code>0xe.0x3fffffff</code> on the left-hand side, and <code>0x18.0x1fd57fcf</code> on the right hand side, rather than the arbitrarily chosen categories 8 and 42.</li>
+<li>The larger density of positives, in relation to the entirety of the dataset is clearly visible here, but other than that, no real patterns seem to emerge.</li>
+<li>Regarding combination <code>0x18.0x1fd57fcf</code>, it seems likely that the unusually large proportion of positives is a selection-bias artefact resulting from the fact that it’s so thinly populated, so I’ll file this under dead end.</li>
+<li>Once again, there isn’t an obvious way here, to separate the positives from the negatives.</li>
 </ul>
 </div>
 </body>

@@ -134,11 +134,8 @@ data.  It's a CSV file, with the following columns
 * $\mathrm{y}$ is the dependent variable, i.e. the class label we are trying
   to predict as part of the classification problem at hand.
 * $\mathrm{cid}$ (which is also called $\mathtt{cid}$ in the data) is
-  a number in the range $[1,30]$.
-  In combination with [this comment here], according to which this feature
-  "somewhat structures the data", I'm assuming that the abbreviation is for
-  "category id", and that the feature is not to be interpreted as a number,
-  neither ordinal nor cardinal, but rather as a discrete symbol.
+  a number in the range $[1,30]$ is a discrete symbol.  I'm assuming it
+  stands for "categorical id" or so.
 * Among the columns called $\mathtt{x}_1 \ldots \mathtt{x}_{100}$ in the data,
   there are 70 continuous-valued numeric columns, and 30 columns with
   values `0` or `1`.

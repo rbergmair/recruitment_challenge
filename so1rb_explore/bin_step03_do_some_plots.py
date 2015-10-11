@@ -139,7 +139,7 @@ def step03( datadir ):
   ax[4,1].plot( c42_neg_x99, c42_neg_x100, marker='o', color='b', linestyle='', alpha=0.66 );
   ax[4,1].plot( c42_pos_x99, c42_pos_x100, marker='o', color='r', linestyle='', alpha=0.66 );
 
-  fig.savefig( datadir+'/step02_do_some_plots.pdf' );
+  fig.savefig( datadir+'/step03.svg' );
 
 
 
