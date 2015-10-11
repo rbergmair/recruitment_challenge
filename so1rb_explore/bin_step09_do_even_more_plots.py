@@ -7,7 +7,7 @@ import numpy as np;
 
 
 INTERESTING_COMBINATIONs \
-  = [ (32,53) ];
+  = [ (10,63) ];
 
 
 
@@ -52,7 +52,7 @@ def step09( datadir ):
     ax.plot( neg_x1[ dimpair ], neg_x2[ dimpair ], marker='o', color='b', linestyle='', alpha=0.66 );
     ax.plot( pos_x1[ dimpair ], pos_x2[ dimpair ], marker='o', color='r', linestyle='', alpha=0.66 );
 
-    fig.savefig( datadir+'/step09_do_even_more_plots.pdf' );
+    fig.savefig( datadir+'/step09.png' );
 
 
 

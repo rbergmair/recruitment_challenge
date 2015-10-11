@@ -41,9 +41,9 @@ def discretize( value, septiles ):
   return r;
 
 
-def step08( datadir ):
+def step08( datadir, subsample ):
 
-  with open( datadir+'/step07_data.pickle', 'rb' ) as f:
+  with open( datadir+'/step07_'+subsample+'.pickle', 'rb' ) as f:
     data = pickle_load( f );
 
   values_by_dim = {};
@@ -53,9 +53,6 @@ def step08( datadir ):
   for ( y, x ) in data:
 
     for ( i, x_val ) in enumerate( x ):
-
-      if i == 0:
-        continue;
 
       values_by_dim[ i ] = values_by_dim.get( i, [] ) + [ x_val ];
       if y == '0':
@@ -152,7 +149,7 @@ def step08( datadir ):
           maxtotal = total;
     maxprop_dimpair.append( (-maxprop,dimpair,maxtotal) );
 
-  with open( datadir+"/step08_median_shift_by_dim.txt", "wt" ) as out:
+  with open( datadir+"/step08_"+subsample+"_median_shift_by_dim.txt", "wt" ) as out:
 
     median_shift_dim = [];
     for i in values_by_dim:
@@ -163,7 +160,7 @@ def step08( datadir ):
       print( dim, median_shift, sep=';' );
       print( dim, median_shift, sep=';', file=out );
 
-  with open( datadir+"/step08_interesting_combinations.txt", "wt" ) as out:
+  with open( datadir+"/step08_"+subsample+"_interesting_combinations.txt", "wt" ) as out:
 
     for (maxprop,dimpair,maxtotal) in sorted( maxprop_dimpair ):
       print( dimpair[0], dimpair[1], -maxprop, maxtotal, sep=';' );
@@ -173,7 +170,8 @@ def step08( datadir ):
 
 def main( datadir ):
 
-  step08( datadir );
+  for subsample in [ 'data', 'binplane_data', 'catplane_data', 'all_data' ]:
+    step08( datadir, subsample );
 
 
 

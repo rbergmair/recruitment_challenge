@@ -94,26 +94,34 @@ def step06( datadir ):
         pos_x70[ point ] = pos_x70.get( point, [] ) + [ x[70] ];
 
   
-  for point in INTERESTING_POINTS:
+  ( fig, ax ) = plt.subplots( ncols=2, nrows=5, figsize=(6,12) );
 
-    ( fig, ax ) = plt.subplots( nrows=5, figsize=(6,12) );
+  ax[0,0].plot( neg_x1[ '0xe.0x3fffffff' ], neg_x2[ '0xe.0x3fffffff' ], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[0,0].plot( pos_x1[ '0xe.0x3fffffff' ], pos_x2[ '0xe.0x3fffffff' ], marker='o', color='r', linestyle='', alpha=0.66 );
+  ax[0,1].plot( neg_x1[ '0x18.0x1fd57fcf' ], neg_x2[ '0x18.0x1fd57fcf' ], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[0,1].plot( pos_x1[ '0x18.0x1fd57fcf' ], pos_x2[ '0x18.0x1fd57fcf' ], marker='o', color='r', linestyle='', alpha=0.66 );
 
-    ax[0].plot( neg_x1[ point ], neg_x2[ point ], marker='o', color='b', linestyle='', alpha=0.66 );
-    ax[0].plot( pos_x1[ point ], pos_x2[ point ], marker='o', color='r', linestyle='', alpha=0.66 );
+  ax[1,0].plot( neg_x1[ '0xe.0x3fffffff' ], neg_x69[ '0xe.0x3fffffff' ], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[1,0].plot( pos_x1[ '0xe.0x3fffffff' ], pos_x69[ '0xe.0x3fffffff' ], marker='o', color='r', linestyle='', alpha=0.66 );
+  ax[1,1].plot( neg_x1[ '0x18.0x1fd57fcf' ], neg_x69[ '0x18.0x1fd57fcf' ], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[1,1].plot( pos_x1[ '0x18.0x1fd57fcf' ], pos_x69[ '0x18.0x1fd57fcf' ], marker='o', color='r', linestyle='', alpha=0.66 );
 
-    ax[1].plot( neg_x1[ point ], neg_x69[ point ], marker='o', color='b', linestyle='', alpha=0.66 );
-    ax[1].plot( pos_x1[ point ], pos_x69[ point ], marker='o', color='r', linestyle='', alpha=0.66 );
+  ax[2,0].plot( neg_x1[ '0xe.0x3fffffff' ], neg_x70[ '0xe.0x3fffffff' ], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[2,0].plot( pos_x1[ '0xe.0x3fffffff' ], pos_x70[ '0xe.0x3fffffff' ], marker='o', color='r', linestyle='', alpha=0.66 );
+  ax[2,1].plot( neg_x1[ '0x18.0x1fd57fcf' ], neg_x70[ '0x18.0x1fd57fcf' ], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[2,1].plot( pos_x1[ '0x18.0x1fd57fcf' ], pos_x70[ '0x18.0x1fd57fcf' ], marker='o', color='r', linestyle='', alpha=0.66 );
 
-    ax[2].plot( neg_x1[ point ], neg_x70[ point ], marker='o', color='b', linestyle='', alpha=0.66 );
-    ax[2].plot( pos_x1[ point ], pos_x70[ point ], marker='o', color='r', linestyle='', alpha=0.66 );
+  ax[3,0].plot( neg_x2[ '0xe.0x3fffffff' ], neg_x70[ '0xe.0x3fffffff' ], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[3,0].plot( pos_x2[ '0xe.0x3fffffff' ], pos_x70[ '0xe.0x3fffffff' ], marker='o', color='r', linestyle='', alpha=0.66 );
+  ax[3,1].plot( neg_x2[ '0x18.0x1fd57fcf' ], neg_x70[ '0x18.0x1fd57fcf' ], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[3,1].plot( pos_x2[ '0x18.0x1fd57fcf' ], pos_x70[ '0x18.0x1fd57fcf' ], marker='o', color='r', linestyle='', alpha=0.66 );
 
-    ax[3].plot( neg_x2[ point ], neg_x70[ point ], marker='o', color='b', linestyle='', alpha=0.66 );
-    ax[3].plot( pos_x2[ point ], pos_x70[ point ], marker='o', color='r', linestyle='', alpha=0.66 );
+  ax[4,0].plot( neg_x69[ '0xe.0x3fffffff' ], neg_x70[ '0xe.0x3fffffff' ], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[4,0].plot( pos_x69[ '0xe.0x3fffffff' ], pos_x70[ '0xe.0x3fffffff' ], marker='o', color='r', linestyle='', alpha=0.66 );
+  ax[4,1].plot( neg_x69[ '0x18.0x1fd57fcf' ], neg_x70[ '0x18.0x1fd57fcf' ], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[4,1].plot( pos_x69[ '0x18.0x1fd57fcf' ], pos_x70[ '0x18.0x1fd57fcf' ], marker='o', color='r', linestyle='', alpha=0.66 );
 
-    ax[4].plot( neg_x69[ point ], neg_x70[ point ], marker='o', color='b', linestyle='', alpha=0.66 );
-    ax[4].plot( pos_x69[ point ], pos_x70[ point ], marker='o', color='r', linestyle='', alpha=0.66 );
-
-    fig.savefig( datadir+'/step06_do_some_more_plots_{}.pdf'.format( point ) );
+  fig.savefig( datadir+'/step06.png'.format( point ) );
 
 
 

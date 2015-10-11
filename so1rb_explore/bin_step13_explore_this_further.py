@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt;
 
 
 
-def adhoc01( datadir ):
+def step13( datadir ):
 
   with gzip_open( datadir+"/train.tsv.gz", "rt" ) as f:
 
@@ -85,13 +85,13 @@ def adhoc01( datadir ):
   ax[0,1].hist( [ neg_rndx, pos_rndx ], 100, histtype='step', color='br', linewidth=3 );  
   ax[1,0].hist( [ neg_valsx_, pos_valsx_ ], 100, histtype='step', color='br', linewidth=3 );  
   ax[1,1].hist( [ neg_rndx_, pos_rndx_ ], 100, histtype='step', color='br', linewidth=3 );  
-  fig.savefig( datadir+'/step13.pdf' );
+  fig.savefig( datadir+'/step13.png' );
 
 
 
 def main( datadir ):
 
-  adhoc01( datadir );
+  step13( datadir );
 
 
 

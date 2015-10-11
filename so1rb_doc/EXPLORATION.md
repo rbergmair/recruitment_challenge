@@ -257,7 +257,7 @@
 - Interestingly, it is the combination of binary features
   equalling `0x3fffffff`, i.e. the combination for which every binary
   feature has value one, which has the largest total number of datapoints
-  in it (that number being 7278).
+  in it (that number being 72215).
 - One can further combine that with the category, to obtain the combination
   with category $14$ (denoted `0xe.0x3fffffff`) as the most frequent one.
 - The combination `0x3fffffff` also exhibits a fairly high density of
@@ -269,7 +269,7 @@
   should be able to assign weights appropriately.
 - In combination with category values, the density of positives can go
   even higher: `0xe.0x3fffffff` has as many as 16% (total number of data
-  points 396).
+  points 2436).
 - Combination `0x18.0x1fd57fcf` has as many as 50% positives, but is only
   thinly populated (10 data points).
 - So, I should look at those in more detail.
@@ -291,7 +291,7 @@
 - Once again, there isn't an obvious way here, to separate the positives from
   the negatives.
 
-# 7: Do Some Preprocessing
+# 7: Construct Some Subsamples
 
 - Having looked into the categorical and binary features a little, it's now
   time to turn attention to the continuous variables.
@@ -301,7 +301,170 @@
   continuous variables, even given that I'm not entirely sure if those
   variables are logically dependent on the category and/or the combination
   of binary features.
-- Since 
+- So I constructed four subsamples:
+   - A sample across everything, capping at 10000 data points
+     (`all`).
+   - The category `0xe`, across all combinations of binary features,
+     capping at 10000 data points (`catplane`).
+   - The binary combination `0x3fffffff`, across all categories,
+     capping at 10000 data points (`binplane`).
+   - The combination `0xe.0x3fffffff`
+     (`data`).  There are only 2436 data points
+     there in total, so no capping is needed.
+- In what follows, I will study the continuous variables in detail.
+- In each step, I'll start by looking at `data`.
+- If that leads me to any particular conclusion, I will double-check
+  that conclusion against the other subsamples.  If the conclusion is
+  still justified in the other subsamples, it'll be safe to assume
+  that it's universally valid.
+- If every conclusion is either universally valid or never valid, but
+  never valid in one subsample and not in another, I'll proceed on the
+  assumption that the continuous dimensions are logically independent
+  from the discrete ones.  
+
+# 8: Try Some 2d-Projections
+
+- As far as the classification problem is concerned, the key will be to
+  find some kind of an n-dimensional projection of this 70-dimensional
+  space that allows for a good separation.
+- To that end, I started with what you might call a brute-force search
+  for such a projection.
+- With 70 individual dimensions, there are 2415 pairs of dimensions.
+- For each pair, I look through each data point.
+- I discretize the continuous values into one of 7 range-buckets, each
+  of which is constructed so as to hold an equal number of points
+  (i.e. septiles).
+- So given a pair of dimensions and a data point, the data point can
+  fall into one of 49 cells (one of 7 septiles in on dimension, and
+  another one of 7 septiles in the other dimension).
+- For each pair of dimensions, I record the maximum proportion of
+  positive datapoints observed in any one cell.
+- While I was at it, I also recorded the shift in median among positive
+  versus negative data points, along each dimension.
+- For subsample `data`, the largest proportion was observed for the
+  combination of dimensions 10 and 63, where there was a cell with 65%
+  positive datapoints.
+  But that contained only 0.7% of the data points, so it might just
+  be a coincidence that the cell happened to be at a thinly populated edge.
+- In total, there were only 42 (out of 2415) combinations of features
+  that had a cell with more than 50% positive datapoints.
+- For subsamples `binplane`, `catplane`, and `all` there were no pairs
+  of dimensions yielding any cells with more than 50% positive datapoints
+  at all.
+- Shifts in medians seemd low across the board, so nothing much
+  interesting there either.
+
+# 9: Look At That In A Plot
+
+![](step09.png)
+
+- Just to be thorough, I decided to plot dimension 10 vs 63
+  for subsample `data`
+  (which was the combination that looked remotely like the most interesting).
+- So, nothing there.
+
+# 10: Try Some Sums
+
+![](step10.png)
+
+- Next, I thought I'd look at whether there is more information in the
+  sum of the continuous dimensions than there is in the individual dimensions.
+- An example of such a scenario would be, when each of the individual
+  70 dimensions is the return on a different stock, and the dependent
+  variable is dependent on the move of the stock market as a whole, but not
+  on the move of any individual stock.
+- In this case, each stock would be correlated with the market move, so its
+  return would be the market return, plus a noise term.
+- By averaging across the values, the noise terms cancels out,
+  and the average ends up capturing the market move.
+- I distinguished between dimensions, based on the sign of the shift
+  in class median between the red vs blue points.
+  I summed up the dimensions where that sign was positive to obtain an
+  x-value, and the dimensions where that sign was negative to obtain a
+  y-value.  In addition, I weighted the values by the magnitude of the
+  median-shift, so as to amplify the effect from those dimensions which
+  have good separations.
+- The result can be seen above.  The four plots are the ones obtained for
+  the four subsamples.  In all four cases, it can be seen that no
+  separation emerges.  So, that's another dead end.
+
+# 11: Test For Centre Embedding
+
+- In step 8, I already did a brute force search for a pair of two dimensions,
+  whose values yield a good separation in some region of the resulting
+  two dimensional space.
+- But just because, there isn't a set of two such dimensions, it doesn't
+  mean that there couldn't be a higher-dimensional projection that creates
+  good separation.
+- For example: Imagine a donut and a cherry which is in the hole in the
+  middle of the donut.  The donut and the cherry are two different classes
+  of data points.
+- Looking at it in a 2d-projection from the top, it's easy to separate them
+  (for example, using polar coordinates).
+- Looking at it in any 1d-projection, it becomes impossible to separate them.
+- That phenomenon could exist in a higher-dimensional variety.  For example,
+  given a cocktail cherry inside a coconut, any 2d-projection is now bound
+  to fail, but you can still separate them in the 3d-representation.
+- The problem is, we can't really reiterate the study from step 8 in
+  higher-dimensional spaces, since it would very quickly become
+  computationally very expensive.
+- But we're lucky, we might be looking at a situation where there is a
+  high-dimensional projection that achieves the separation, subject to the
+  additional constraint that the cell of interest is always the one in the
+  centre.  -- This is somewhat suggested by the fact that every
+  2d-projection I've looked at so far seems to have the positives embedded
+  in the centre of the negatives, so that might be universally true.
+- So I wrote another script, based on the one from step 8, looking not only
+  at pairs, but also at sets of three and four dimensions, which computes the
+  proportion of positives among those points which fall in the central
+  septile in every one of those dimensions.
+- The following observations relate to subsample `data`.
+- The best single dimension achieves proportion at most 22%.
+- The best pair of dimensions achieves 36%.
+- The best set of three dimensions achieves 60%, but that cell only contains
+  10 data points.
+- The best set of four dimensions achieves 50%.
+- The fact that it tails off after three suggests that there's little point
+  to continuing to look for central embedding in higher-dimensional spaces.
+- Reiterating the experiment with `all_data`, capping at 2500 datapoints,
+  the progression is 8%, 17%, 50%, 33%.
+- So, that's one more dead end.
+
+# 12: Start Thinking Outside The Box
+
+![](step12.png)
+
+- In my desperation, I started taking some long shots, at this point.
+- What if the value of $\mathtt{cid}$ indicates one dimension as being
+  "relevant", whereas the others are just noise?
+- The histogram of relevant values are in the plot above.
+- On the left hand side, the assumption is that the index is across
+  all $\mathtt{x}$'s, on the right hand side, just across the continuous
+  ones.
+- The spike in the middle, on the left hand side is due to the fact
+  that zeroes and ones are a lot more frequent, due to the binary
+  features playing into this.  
+- No separation.  Another day older and deeper in debt.
+- But the idea was not as far fetched, as it may have sounded.  This kind
+  of data could come about, when the dimensions record, for example,
+  signals from different sensors, but they are not meaningful at all
+  times.  For example, if they are cameras, and only one of them has
+  the lens-cap off at any one time, and $\mathtt{cid}$ records which one,
+  then this would be that type of scenario.
+
+# 13: Explore This Further
+
+![](step13.png)
+
+- I hallucinated some patterns there, that I will not even go into.
+- In order to make completely sure, I compared the histogram that
+  results from picking the dimension picked out by $\mathtt{cid}$
+  (left) against a randomly chosen dimension (right).
+- I did this without any filtering (top), and filtering out the
+  zeroes and ones (bottom).
+- So that's what this is.
+- Nothing here.
+
 
 
 

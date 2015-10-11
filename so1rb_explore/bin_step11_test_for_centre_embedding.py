@@ -45,9 +45,9 @@ def discretize( value, septiles ):
   return r;
 
 
-def step11( datadir ):
+def step11( datadir, subsample ):
 
-  with open( datadir+'/step07_binplane_data.pickle', 'rb' ) as f:
+  with open( datadir+'/step07_'+subsample+'.pickle', 'rb' ) as f:
     data = pickle_load( f );
 
   print( len(data) );
@@ -56,18 +56,12 @@ def step11( datadir ):
   values_by_dim_pos = {};
   values_by_dim_neg = {};
 
-  i = 0;
+  for ( rowid, ( y, x ) ) in enumerate( data ):
 
-  for ( y, x ) in data:
-
-    i += 1;
-    if i >= 10000:
+    if rowid >= 2500:
       break;
 
     for ( i, x_val ) in enumerate( x ):
-
-      if i == 0:
-        continue;
 
       values_by_dim[ i ] = values_by_dim.get( i, [] ) + [ x_val ];
       if y == '0':
@@ -124,14 +118,14 @@ def step11( datadir ):
   pos = set();
   neg = set();
 
-  for ( y, x ) in data:
+  for ( rowid, ( y, x ) ) in enumerate( data ):
 
     signature = 0;
 
     for ( i, x_val ) in enumerate( x ):
 
-      if i == 0:
-        continue;
+      if rowid >= 2500:
+        break;
 
       septiles = septiles_by_dim[i];
 
@@ -148,11 +142,9 @@ def step11( datadir ):
     else:
       assert False;
 
-  with open( datadir+"/step11_test_for_centre_embedding.txt", "wt" ) as out:
+  with open( datadir+"/step11_"+subsample+".txt", "wt" ) as out:
 
-    three_d_projections = None;
-
-    for i in range( 1, 4 ):
+    for i in range( 1, 5 ):
 
       print( "-->", i );
       print( "-->", i, file=out );
@@ -176,29 +168,12 @@ def step11( datadir ):
       print( list( sorted( count_dim, reverse=True )[ :7 ] ) );
       print( list( sorted( count_dim, reverse=True )[ :7 ] ), file=out );
 
-      if i == 3:
-        three_d_projections = count_dim;
-
-    for ( p, pos, neg, mask ) in sorted( three_d_projections, reverse=True ):
-      if ( p < ( 396.0 / 2436.0 ) ):
-        break;
-      if ( pos <= 2 ):
-        continue;
-      dims = None;
-      for i in range( 0, 70 ):
-        if ( mask & (1<<i) ) == (1<<i):
-          if dims is None:
-            dims = (i,);
-          else:
-            dims = dims + (i,);
-      print( "{:s}, # {:d}, {:d}, ({:1.4f})".format( repr(dims), pos, neg, p ) );
-      print( "{:s}, # {:d}, {:d}, ({:1.4f})".format( repr(dims), pos, neg, p ), file=out );
-
 
 
 def main( datadir ):
 
-  step11( datadir );
+  step11( datadir, "data" );
+  step11( datadir, "all_data" );
 
 
 

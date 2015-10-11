@@ -45,7 +45,7 @@ def step07( datadir ):
       assert cid[-1] == '"';
       cid = int( cid[1:-1] );
 
-      x = [ None ];
+      x = [];
       b = [];
 
       for i in range( 3, len(line) ):
@@ -67,25 +67,33 @@ def step07( datadir ):
       cid_ = hex(cid);
       b_ = hex(b_);
 
-      all_data.append( (y,x) );
+      if len( all_data ) < 10000:
+        all_data.append( (y,x) );
       if ( cid_ == '0xe' ) and ( b_ == '0x3fffffff' ):
-        data.append( (y,x) );
+        if len( data ) < 10000:
+          data.append( (y,x) );
       if ( cid_ == '0xe' ):
-        catplane_data.append( (y,x) );
+        if len( catplane_data ) < 10000:
+          catplane_data.append( (y,x) );
       if ( b_ == '0x3fffffff' ):
-        binplane_data.append( (y,x) );
+        if len( binplane_data ) < 10000:
+          binplane_data.append( (y,x) );
 
   with open( datadir+'/step07_all_data.pickle', 'wb' ) as f:
     pickle_dump( all_data, f );
+    print( "all data:", len(all_data) );
 
   with open( datadir+'/step07_binplane_data.pickle', 'wb' ) as f:
     pickle_dump( binplane_data, f );
+    print( "binplane data:", len(binplane_data) );
 
   with open( datadir+'/step07_catplane_data.pickle', 'wb' ) as f:
     pickle_dump( catplane_data, f );
+    print( "catplane data:", len(catplane_data) );
 
   with open( datadir+'/step07_data.pickle', 'wb' ) as f:
     pickle_dump( data, f );
+    print( "data:", len(data) );
 
 
 

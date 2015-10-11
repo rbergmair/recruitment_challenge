@@ -112,7 +112,7 @@ def step03( datadir ):
   print( len(c42_neg_x1), len(c42_neg_x2), len(c42_neg_x99), len(c42_neg_x100) );
   print( len(c42_pos_x1), len(c42_pos_x2), len(c42_pos_x99), len(c42_pos_x100) );
 
-  ( fig, ax ) = plt.subplots( ncols=2, nrows=5 );
+  ( fig, ax ) = plt.subplots( ncols=2, nrows=5, figsize=(6,12) );
 
   ax[0,0].plot( c08_neg_x1, c08_neg_x2, marker='o', color='b', linestyle='', alpha=0.66 );
   ax[0,0].plot( c08_pos_x1, c08_pos_x2, marker='o', color='r', linestyle='', alpha=0.66 );
@@ -139,7 +139,7 @@ def step03( datadir ):
   ax[4,1].plot( c42_neg_x99, c42_neg_x100, marker='o', color='b', linestyle='', alpha=0.66 );
   ax[4,1].plot( c42_pos_x99, c42_pos_x100, marker='o', color='r', linestyle='', alpha=0.66 );
 
-  fig.savefig( datadir+'/step03.svg' );
+  fig.savefig( datadir+'/step03.png' );
 
 
 

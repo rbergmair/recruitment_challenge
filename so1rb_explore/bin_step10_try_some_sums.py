@@ -8,55 +8,73 @@ import matplotlib.pyplot as plt;
 
 def step10( datadir ):
 
-  weight_by_dim = [ None ] * 71;
+  vals_x_pos = {};
+  vals_y_pos = {};
+  vals_x_neg = {};
+  vals_y_neg = {};
 
-  with open( datadir+'/step08_median_shift_by_dim.txt', 'rt' ) as f:
+  for subsample in [ 'data', 'binplane_data', 'catplane_data', 'all_data' ]:
 
-    for line in f:
+    vals_x_pos[ subsample ] = [];
+    vals_y_pos[ subsample ] = [];
+    vals_x_neg[ subsample ] = [];
+    vals_y_neg[ subsample ] = [];
 
-      if line and line[:-1] == '\n':
-        line = line[:-1];
+    weight_by_dim = [ None ] * 70;
 
-      ( dim, weight ) = line.split( ';' );
-      dim = int(dim);
-      weight = float(weight);
-      weight_by_dim[ dim ] = weight;
-  
-  # print( weight_by_dim );
+    with open( datadir+'/step08_'+subsample+'_median_shift_by_dim.txt', 'rt' ) as f:
 
-  with open( datadir+'/step07_data.pickle', 'rb' ) as f:
-    data = pickle_load( f );
+      for line in f:
 
-  vals_x_pos = [];
-  vals_y_pos = [];
-  vals_x_neg = [];
-  vals_y_neg = [];
+        if line and line[:-1] == '\n':
+          line = line[:-1];
 
-  for (y,x) in data:
+        ( dim, weight ) = line.split( ';' );
+        dim = int(dim);
+        weight = float(weight);
+        weight_by_dim[ dim ] = weight;
+    
+    # print( weight_by_dim );
 
-    x_ = 0.0;
-    y_ = 0.0;
+    with open( datadir+'/step07_'+subsample+'.pickle', 'rb' ) as f:
+      data = pickle_load( f );
 
-    for (i,valx) in enumerate(x):
-      if i == 0:
-        continue;
-      if weight_by_dim[i] >= 0.0:
-        x_ += valx * weight_by_dim[i];
-      else:
-        y_ += valx * weight_by_dim[i];
+    for (y,x) in data:
 
-    if y == '0':
-      vals_x_neg.append( x_ );
-      vals_y_neg.append( y_ );
-    elif y == '1':
-      vals_x_pos.append( x_ );
-      vals_y_pos.append( y_ );
+      x_ = 0.0;
+      y_ = 0.0;
 
-  ( fig, ax ) = plt.subplots( nrows=1, ncols=1, figsize=(6,6) );
-  ax.plot( vals_x_neg, vals_y_neg, marker='o', color='b', linestyle='', alpha=0.66 );
-  ax.plot( vals_x_pos, vals_y_pos, marker='o', color='r', linestyle='', alpha=0.66 );
-  
-  fig.savefig( datadir+'/step10_try_some_sums.pdf' );
+      for (i,valx) in enumerate(x):
+        if weight_by_dim[i] >= 0.0:
+          x_ += valx * weight_by_dim[i];
+          # x_ += valx;
+        else:
+          y_ += valx * weight_by_dim[i];
+          # y_ += valx;
+
+      if y == '0':
+        vals_x_neg[ subsample ].append( x_ );
+        vals_y_neg[ subsample ].append( y_ );
+      elif y == '1':
+        vals_x_pos[ subsample ].append( x_ );
+        vals_y_pos[ subsample ].append( y_ );
+
+
+  ( fig, ax ) = plt.subplots( nrows=2, ncols=2, figsize=(6,6) );
+
+  ax[0,0].plot( vals_x_neg['data'], vals_y_neg['data'], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[0,0].plot( vals_x_pos['data'], vals_y_pos['data'], marker='o', color='r', linestyle='', alpha=0.66 );
+
+  ax[0,1].plot( vals_x_neg['binplane_data'], vals_y_neg['binplane_data'], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[0,1].plot( vals_x_pos['binplane_data'], vals_y_pos['binplane_data'], marker='o', color='r', linestyle='', alpha=0.66 );
+
+  ax[1,0].plot( vals_x_neg['catplane_data'], vals_y_neg['catplane_data'], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[1,0].plot( vals_x_pos['catplane_data'], vals_y_pos['catplane_data'], marker='o', color='r', linestyle='', alpha=0.66 );
+
+  ax[1,1].plot( vals_x_neg['all_data'], vals_y_neg['all_data'], marker='o', color='b', linestyle='', alpha=0.66 );
+  ax[1,1].plot( vals_x_pos['all_data'], vals_y_pos['all_data'], marker='o', color='r', linestyle='', alpha=0.66 );
+
+  fig.savefig( datadir+'/step10.png' );
 
 
 

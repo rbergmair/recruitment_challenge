@@ -52,7 +52,7 @@ def step04( datadir ):
     dim_by_uvalues.append( ( len(uvalues), dim, uvalues_ ) );
 
 
-  with open( datadir+"/step04_quantization_test.txt", "wt" ) as out:
+  with open( datadir+"/step04.txt", "wt" ) as out:
 
     for ( uvalues, dim, uvalues_ ) in sorted( dim_by_uvalues ):
       print( "{:3d} {:7d} {:s}".format( dim, uvalues, repr(uvalues_) ) );

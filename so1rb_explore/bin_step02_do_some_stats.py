@@ -45,7 +45,7 @@ def step02( datadir ):
 
       stats_by_cid[ cid ] = ( total, pos );
 
-  with open( datadir+"/step02_do_some_stats.txt", "wt" ) as out:
+  with open( datadir+"/step02.txt", "wt" ) as out:
 
     for cid in sorted( stats_by_cid.keys() ):
       

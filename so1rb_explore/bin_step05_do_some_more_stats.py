@@ -71,14 +71,14 @@ def step05( datadir ):
       stats_by_cid_b[ (cid,b_) ] = ( total, pos );
 
 
-  with open( datadir+"/step05_do_some_more_stats.txt", "wt" ) as out:
+  with open( datadir+"/step05.txt", "wt" ) as out:
 
     for b in sorted( stats_by_b ):
 
       ( total, pos ) = stats_by_b[ b ];
       p = float(pos) / float(total);
 
-      print( "{:20s};{:7d};{:7d};{:1.4f}".format( hex(b), pos, total, p ) );
+      # print( "{:20s};{:7d};{:7d};{:1.4f}".format( hex(b), pos, total, p ) );
       print( "{:20s};{:7d};{:7d};{:1.4f}".format( hex(b), pos, total, p ), file=out );
 
     print( "-->", len(stats_by_b) );
@@ -88,7 +88,7 @@ def step05( datadir ):
       ( total, pos ) = stats_by_cid_b[ (cid,b) ];
       p = float(pos) / float(total);
 
-      print( "{:20s};{:7d};{:7d};{:1.4f}".format( hex(cid)+'.'+hex(b), pos, total, p ) );
+      # print( "{:20s};{:7d};{:7d};{:1.4f}".format( hex(cid)+'.'+hex(b), pos, total, p ) );
       print( "{:20s};{:7d};{:7d};{:1.4f}".format( hex(cid)+'.'+hex(b), pos, total, p ), file=out );
 
     print( "-->", len(stats_by_cid_b) );
