@@ -8,56 +8,48 @@ from functools import reduce;
 
 
 
-# based on step07_all_data.pickle 2
 DIMCLUSTERs \
-  = [ [ -26, 20, 14, -54 ],                                  # 0
-      [ 32, 2, -34, -36, -12, 13, 15, 51, 53, 24, 31 ],      # 1
-      [ -64, -57, 60, 6, -63 ],                              # 2
-      [ -33, -39, 8, -9, -42, -44, -48, -19, 21, 55 ],       # 3
-      [ 0, 1, 30 ],                                          # 4
-      [ -56, 3, 47 ],                                        # 5
-      [ -35, 4, -67 ],                                       # 6
-      [ 65, 66, 37, -38, -52, 25, -58, -61 ],                # 7
-      [ 50, 43, 28, 68 ],                                    # 8
-      [ 27, 5, 7 ]                                           # 9
+  = [ [ -55, -27, 15, 21 ],                                    # 0
+      [ -61, -11, 6, 8, 28 ],                                  # 1
+      [ -59, -35, 3, 14, 16, 32, 38 ],                         # 2
+      [ -67, -30, -26, 23, 39, 62 ],                           # 3
+      [ -57, 4, 48 ],                                          # 4
+      [ -64, -51, -44, 17 ],                                   # 5
+      [ -54, -52, -33, 13, 29, 37, 69 ],                       # 6
+      [ -68, -53, -36, 5, 66 ],                                # 7
+      [ -49, -45, -43, -40, -34, -25, -20, -10, 9, 22, 56 ],   # 8
+      [ -65, -58, 7 ],                                         # 9
+      [ 1, 2, 31 ]                                             # 10
     ];
 
-# based on step07_data.pickle 1
 DIMCLUSTERs \
-  = [ [ 5, 7, -10, 27, -60, -30 ],                           # 0
-      [ 0, 1, -57, -64, 6 ],                                 # 1
-      [ -33, -39, 8, -9, -42, -44, -48, -19, 21, 55, -24 ],  # 2
-      [ -54, -26, 29, 14, -22 ],                             # 3
-      [ 16, -50, -43, -63 ],                                 # 4
-      [ -56, 3, 47 ],                                        # 5
-      [ 31, -34, 13, 15 ],                                   # 6
-      [ 65, 2, 66, 37, -38, -52, 25, -58, -61 ],             # 7
-      [ -32, 36, 68, 12, -51, -53, 28 ]                      # 8
-    ];
+  = [ [ -55, -27, 15, 21 ],                                    # 0  0
 
-# based on step07_all_data.pickle plus manual fiddling ?
-DIMCLUSTERs \
-  = [ [ -26, 20, 14, -54 ]                                   # 0     # 0
-      + [ -27, -5, -7 ],                                     # -9
+      [ -61, -11, 6, 8, 28 ]                                   # 1  1
+      + [ -1, -2, -31 ]                                        # 10
+      + [ 57, -4, -48 ]                                        # 4
+      + [ 64, 51, 44, -17 ]                                    # 5
+      + [ 65, 58, -7 ],                                        # 9
 
-      [ 32, 2, -34, -36, -12, 13, 15, 51, 53, 24, 31 ]       # 1     # 1
-      + [ 65, 66, 37, -38, -52, 25, -58, -61 ]               # 7      
-      + [ 33, 39, -8, 9, 42, 44, 48, 19, -21, -55 ]          # -3
-      + [ -50, -43, -28, -68 ]                               # -8
-      + [ -56, 3, 47 ]                                       # 5
-      + [ -35, 4, -67 ],                                     # 6
-
-      [ -64, -57, 60, 6, -63 ]                               # 2     # 2
-      + [ 0, 1, 30 ],                                        # 4
+      [ -59, -35, 3, 14, 16, 32, 38 ]                          # 2  2
+      + [ 54, 52, 33, -13, -29, -37, -69 ]                     # 6
+      + [ -68, -53, -36, 5, 66 ]                               # 7
+      + [ 49, 45, 43, 40, 34, 25, 20, 10, -9, -22, -56 ]       # 8
+      + [ 67, 30, 26, -23, -39, -62 ],                         # 3
     ];
 
 
-def step17( datadir ):
+USE_MAHALANOBIS \
+  = True;
+
+
+
+def step18( datadir, subsample ):
 
   data_pos = [];
   data_neg = [];
 
-  with open( datadir+'/step07_data.pickle', 'rb' ) as f:
+  with open( datadir+'/step07_'+subsample+'.pickle', 'rb' ) as f:
     data = pickle_load( f );
 
   rowcount = 0;
@@ -65,7 +57,7 @@ def step17( datadir ):
   for ( y, x ) in data:
     
     rowcount += 1;
-    if rowcount > 10000:
+    if rowcount > 2500:
       break;
 
     row = [];
@@ -75,9 +67,9 @@ def step17( datadir ):
       nx = 0.0;
       for dim in dims:
         if dim < 0:
-          xval += -x[ 1+abs(dim) ];
+          xval += -x[ abs(dim)-1 ];
         else:
-          xval += x[ 1+abs(dim) ];
+          xval += x[ abs(dim)-1 ];
         nx += 1.0;        
       row.append( xval/nx );
 
@@ -96,8 +88,8 @@ def step17( datadir ):
     = [ ( 0.5 + 0.1417 * float(len(DIMCLUSTERs)-3) ) * float(i)/10.0 \
         for i in range(5,26) ];
 
-  print( " ".join( [ "{:1.4f}".format(p) for p in pthresholds ] ) );
-  print( " ".join( [ "{:1.4f}".format(d) for d in dthresholds ] ) );
+  print( ", ".join( [ "{:1.4f}".format(p) for p in pthresholds ] ) );
+  print( ", ".join( [ "{:1.4f}".format(d) for d in dthresholds ] ) );
 
   cov = np.cov( np.array( data_pos+data_neg ).T );
   cov_inv = LA.inv( cov );
@@ -108,7 +100,7 @@ def step17( datadir ):
   data_pos = np.array( data_pos );
   data_neg = np.array( data_neg );
 
-  with open( datadir+'/step18_explore_the_neighborhood_some_more.csv', 'wt' ) as out:
+  with open( datadir+'/step18_'+subsample+'.csv', 'wt' ) as out:
 
     for p_threshold in pthresholds:
 
@@ -130,15 +122,23 @@ def step17( datadir ):
 
             pos_row_vec = pos_row.reshape(1,len(pos_row)).T;
             diff = pos_row_vec - ref_row_vec;
-            dist = np.sqrt( np.dot( np.dot( diff.T, cov_inv ), diff ) );
+            if USE_MAHALANOBIS:
+              dist = np.sqrt( np.dot( np.dot( diff.T, cov_inv ), diff ) );
+            else:
+              dist = LA.norm( diff );
+
             if dist <= d_threshold:
-              pos_in_vicinity.add( j );
+              pos_in_vicinity.add( j );             
 
           for (j,neg_row) in enumerate( data_neg ):
 
             neg_row_vec = neg_row.reshape(1,len(neg_row)).T;
             diff = neg_row_vec - ref_row_vec;
-            dist = np.sqrt( np.dot( np.dot( diff.T, cov_inv ), diff ) );
+            if USE_MAHALANOBIS:
+              dist = np.sqrt( np.dot( np.dot( diff.T, cov_inv ), diff ) );
+            else:
+              dist = LA.norm( diff );
+
             if dist <= d_threshold:
               neg_in_vicinity.add( j );
           
@@ -166,7 +166,7 @@ def step17( datadir ):
 
 def main( datadir ):
 
-  step17( datadir );
+  step18( datadir, 'data' );
 
 
 

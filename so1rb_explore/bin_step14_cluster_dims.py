@@ -19,14 +19,18 @@ from sklearn.cluster import AgglomerativeClustering;
 
 def step14( datadir ):
 
-  with open( datadir+'/step07_data.pickle', 'rb' ) as f:
-    data = pickle_load( f );
-
-  print( len(data) );
-
   data_ = [];
-  for ( y, x ) in data:
-    data_.append( x[1:] );
+
+  for subsample in [ 'data', 'binplane_data', 'catplane_data', 'all_data' ]:
+
+    with open( datadir+'/step07_'+subsample+'.pickle', 'rb' ) as f:
+      data = pickle_load( f );
+
+    if False:
+      print( len(data) );
+
+    for ( y, x ) in data:
+      data_.append( x );
 
   data_ = np.array( data_ ).T;
 
@@ -41,11 +45,13 @@ def step14( datadir ):
         continue;
       cov_pair.append( ( abs(cov[i,j]), (i,j), cov[i,j] ) );
 
-  for ( abscov, ij, cov_ ) in sorted( cov_pair, reverse=True ):
-    print( ij, cov_ );
+  if False:
+    for ( abscov, ij, cov_ ) in sorted( cov_pair, reverse=True ):
+      print( ij, cov_ );
 
-  print( cov );
-  print( abs(cov) );
+  if False:
+    print( cov );
+    print( abs(cov) );
 
   c = AgglomerativeClustering( 20, affinity='precomputed', linkage='complete' );
   clusters = c.fit_predict( -abs(cov) );
@@ -91,29 +97,20 @@ def step14( datadir ):
     if n_ <= 2.0:
       continue;
 
-    print( c, min_, sum_/n_, max_, len(dims), dims );
+    if False:
+      print( c, min_, sum_/n_, max_, len(dims), dims );
 
     newcluster = []
     mindim = min(dims);
     for dim in dims:
       if cov[ dim, mindim ] >= 0.0:
-        newcluster.append( dim );
+        newcluster.append( dim+1 );
       else:
-        newcluster.append( -dim );
+        newcluster.append( -(dim+1) );
     clusters__.append( newcluster );
 
-  pprint( clusters__ );
-
-
-
-
-
-
-
-
-
-
-
+  for c in clusters__:
+    print( ", ".join([ str(c_) for c_ in sorted(c) ]) );
 
 
 

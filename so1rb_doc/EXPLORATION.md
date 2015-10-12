@@ -303,7 +303,7 @@
   of binary features.
 - So I constructed four subsamples:
    - A sample across everything, capping at 10000 data points
-     (`all`).
+     (`all_data`).
    - The category `0xe`, across all combinations of binary features,
      capping at 10000 data points (`catplane`).
    - The binary combination `0x3fffffff`, across all categories,
@@ -424,7 +424,8 @@
 - The best set of three dimensions achieves 60%, but that cell only contains
   10 data points.
 - The best set of four dimensions achieves 50%.
-- The fact that it tails off after three suggests that there's little point
+- The fact that the differences reverse direction after
+  three dimensions suggests that there's little point
   to continuing to look for central embedding in higher-dimensional spaces.
 - Reiterating the experiment with `all_data`, capping at 2500 datapoints,
   the progression is 8%, 17%, 50%, 33%.
@@ -446,7 +447,7 @@
   features playing into this.  
 - No separation.  Another day older and deeper in debt.
 - But the idea was not as far fetched, as it may have sounded.  This kind
-  of data could come about, when the dimensions record, for example,
+  of data could come about when the dimensions record, for example,
   signals from different sensors, but they are not meaningful at all
   times.  For example, if they are cameras, and only one of them has
   the lens-cap off at any one time, and $\mathtt{cid}$ records which one,
@@ -465,8 +466,216 @@
 - So that's what this is.
 - Nothing here.
 
+# 14: Clustering Dimensions According To Covariance
+
+- Next, I looked at the covariance matrix in some more detail.
+  It turns out that some pairs of dimensions have rather a lot
+  of covariance, some with a positive, some with a negative sign,
+  and some have very little covariance.
+- So, I thought I'd try to reiterate the idea from step 10 of doing
+  sums, but I would do those sums only within clusters of highly
+  correlated features.
+- Going back to our stock market example: There might be industrial
+  stocks, mining stocks, tech stocks, banking stocks, etc.  Each of
+  those market sectors would be a set of stocks that are mutually
+  correlated, but less correlated with stocks in other sectors.
+  So the individual stock return can be thought of as the sector
+  return, plus a noise term (i.e. idiosyncratic risk).
+- So what I did was to compute the covariance matrix using
+  [numpy], take an absolute of that, so as to discard the sign on
+  each covariance, then use that as the affinity matrix for the
+  agglomerative clustering procedure from [scikit-learn].
+- I set the clustering procedure to look for 20 clusters, then
+  discarded clusters that had only one or two dimensions.
+  (Although, in theory, it's perfectly possible that a cluster
+  with only one dimension might be one that's most useful to
+  making the distinction).
+- The clusters for subsample `data` were as follows:
+    - -61, -11, 6, 8, 28
+    - -55, -27, 15, 21
+    - -59, -35, 3, 14, 16, 32, 38
+    - -67, -30, -26, 23, 39, 62
+    - -57, 4, 48
+    - -64, -51, -44, 17
+    - -54, -52, -33, 13, 29, 37, 69
+    - -68, -53, -36, 5, 66
+    - -49, -45, -43, -40, -34, -25, -20, -10, 9, 22, 56
+    - -65, -58, 7
+    - 1, 2, 31
+- Each of those lists is a cluster (think market sector),
+  containing dimensions (think stocks in the sector).
+- There was some variation in this result, as applied to the
+  different subsamples (which is bad), but major portions of
+  this clustering actually remained unaltered (which is good).
+  In order to be able to proceed with only a single clustering,
+  I decided to concatenate the four subsamples to get to a
+  single clustering that I hoped would have some universality.
+- The indexing on the dimensions starts with one, rather than
+  zero.
+- I apply a negative sign to all dimensions that have negative
+  correlation with the first dimension in the cluster.
+- This implies a frontend feature engineering step, whereby
+  I turn the 70 individual dimensions into only 10 dimensions, each
+  corresponding to a cluster.  The value along each of the 10 dimensions
+  is the average computed across those among the original 70 dimensions
+  which are members of the cluster.  For the dimensions with a negative
+  sign, I flip the sign on the input value before adding it to the
+  average.
+- The idea behind the sign flipping is something along these lines:
+  If the first cluster is stock options on tech stocks, and dimension
+  6 is an IBM call (where the price goes up when IBM stock goes up),
+  and dimension 11 is a Microsoft put (where the price goes down
+  when the Microsoft stock goes up), then they will be correlated
+  negatively.  By adding them together, you are
+  actually cancelling out the interesting part of the risk, rather
+  than reinforcing it.  So this is where the sign flipping comes in.
+
+# 15: Looking At That In A Plot
+
+![](step15b.png)
+
+- After generating the
+  <a href="step15a.png" target="_blank">original plot</a>
+  based on the clustering from the previous step, it turned
+  out that there were still pairs of clusters that showed
+  fairly high correlations.
+- So I manually kept merging the clusters, until no obvious
+  correlations were left, which left me with only three clusters:
+    - -55, -27, 15, 21,
+    - -61, -11, 6, 8, 28,
+      -1, -2, -31,
+      57, -4, -48,
+      64, 51, 44, -17,
+      65, 58, -7
+    - -59, -35, 3, 14, 16, 32, 38,
+      54, 52, 33, -13, -29, -37, -69,
+      -68, -53, -36, 5, 66,
+      49, 45, 43, 40, 34, 25, 20, 10, -9, -22, -56,
+      67, 30, 26, -23, -39, -62
+- The plot relating to the resulting clustering is what's shown above.
+- No separation emerges.
+
+# 16: Looking At That In One More Plot
+
+![](step16_1_0.png)
+
+![](step16_2_0.png)
+
+![](step16_2_1.png)
+
+- I kind of like these little histograms on the chart axes
+  to better visualize the relative densities in different
+  regions of the space, when there's a lot of overlap,
+  like there is in this plot.
+- But in this case, no interesting patterns emerge.
+- Throughout steps 8--16, I would have really liked to find
+  out about some feature engineering, that would allow me to
+  see some proper separation between the positive and the
+  negative class.
+- But, having now directed a serious amount of work toward
+  this effort, to no avail, I have decided that there may just
+  not be any proper separation; that all there is to capture
+  here is localized variations in the relative densities of
+  positives vs negatives, with the proportion of positives
+  never crossing the 50% boundary at all.
+- So this rules out pretty much all of the machine learning
+  methods that rely on discriminant functions, linear or otherwise.
+- Rather, the method of choice here would have to be something
+  with rather a "brute force" feel to it, such as nearest neighbor
+  methods, although even a nearest neighbor approach would
+  presumably need some tweaking, for example to the majority voting
+  threshold, so that the positive class doesn't simply get
+  overwhelmed by the negative class.
+
+# 17: Exploring The Neighborhood
+
+- So: Localized variations in the relative densities of
+  positives vs negatives is what I'm looking for.
+- In order to get a better feel for that, I decided to explore
+  the space immediately surrounding each positive datapoint.
+- So I implemented a script to systematically try through a
+  handful of distance thresholds and precision thresholds.
+- Given a pair of thresholds, it would go through all positive
+  datapoints, collect the set of all points no further away than
+  the set distance.  If the proportion of positives among those
+  points is larger than the precision threshold, then they would
+  all be classified as positives (even though the negatives might
+  still outnumber the positives).
+- By taking the union over all sets of points thus classified as
+  positives, an f-measure can be obtained for each pair of
+  distance threshold and precision threshold.
+- Applying this to the `data` subsample, an f-measure of 40.5%
+  is obtained, using distance threshold 5.81 and precision
+  threshold 23%.
+- On the `all_data` subsample, capping at 2500 samples,
+  that optimum f-measure comes in at 16.8% for precision
+  threshold at 3%.  This is explained, at least to some extent,
+  by the lower proportion of positives among the
+  `all_data` subsample vs the `data` subsample.  The distance
+  threshold is at a nearby location, at 4.98.
+- The above numbers were obtained using only those dimensions that
+  weren't discarded as irrelevant by the feature engineering
+  study from step 14.  Using all of the 70 dimensions instead
+  (and moving back to subsample `data`, rather than `all_data`),
+  the optimal f-measure comes in at 39%, so it does seem like
+  there is some noise in some of those extraneous dimensions
+  discarded by the feature engineering.
+- During development, I also used a set of three randomly chosen
+  dimensions (0, 21, 42) for testing purposes.  Oddly enough,
+  it turned out that, at 40% f-measure, it does almost as well
+  that the run using all of the dimensions (as chosen by the
+  feature engineering from step 14).
+- Using the Mahalanobis distance, instead of the regular Euclidean
+  distance on this set of three dimensions, we can get
+  as high as 41% f-measure.
+- The fact that this 41% result is the best we've managed to
+  obtain in this experiment, and that it relies on three randomly
+  chosen dimensions suggests, that there is scope for further
+  work on feature engineering and dimensionality reduction.
+
+# 18: Exploring The Neighborhood Some More
+
+- So, the obvious next step is to apply the feature engineering
+  from step 14 properly, i.e. actually doing the averages across
+  the clusters, rather than just using them to select the
+  dimensions to keep vs the dimensions to discard.
+- In a first step, I used the original output from step 14, thus
+  reducing the dimensionality from 70 down to 10, and repeated
+  the experiment from step 17 with that piece of feature engineering
+  in place.  That gets us to 42.17% f-measure.
+- Then I retried with the clustering that came out of the manual
+  fiddling in step 15, so reducing from 70 down to 3 dimensions.
+  Despite the heavy reduction in dimensionality, this still yields
+  41.5% f-measure, reinforcing the sense I've gained from
+  the analyses in steps 11 and 17 that the dimensionality of
+  this classifier need not exceed three.
+- To be thorough, I would need to re-check that this conclusion
+  still holds for the other subsamples, but in this case,
+  I chose to skip that.
+- Then I tried switching to Mahalanobis:  This yielded 41.1%
+  f-measure.  Since the feature engineering already produces
+  a feature space that is very close to uncorrelated, there is
+  little gain to be made through the use of an additional
+  decorrelation technique such as Mahalanobis.  
+- But I chose to think about it differently: This shows that, even
+  when Mahalanobis doesn't help it also doesn't do any significant
+  amount of damage, so for the sake of convenience, I decided to
+  leave it in throughout the rest of this project, just so that
+  correlation is one fewer thing to worry about.
+
+
+
+
+
+
+
+
+
+
 
 
 
 [data snooping bias]: https://en.wikipedia.org/wiki/Data_dredging
 [my video lecture on methodology]: http://www.utopia-refraktor.com/en/blog/tech-talks/machine-learning/2015/01/evaluation-methodology
+[scikit-learn]: http://scikit-learn.org/
+[numpy]: http://www.numpy.org/

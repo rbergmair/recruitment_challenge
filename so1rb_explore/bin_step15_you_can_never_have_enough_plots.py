@@ -10,52 +10,42 @@ BINARY_FEATs \
   = [ 9, 11, 14, 15, 22, 23, 25, 37, 39, 41, 44, 45, 46, 48, 49, 51, 55, 58,
       60, 64, 69, 70, 72, 73, 78, 83, 87, 89, 95, 99 ];
 
-# based on step07_all_data.pickle
+# based on step 14
 DIMCLUSTERs \
-  = [ [ -26, 20, 14, -54 ],                                  # 0
-      [ 32, 2, -34, -36, -12, 13, 15, 51, 53, 24, 31 ],      # 1
-      [ -64, -57, 60, 6, -63 ],                              # 2
-      [ -33, -39, 8, -9, -42, -44, -48, -19, 21, 55 ],       # 3
-      [ 0, 1, 30 ],                                          # 4
-      [ -56, 3, 47 ],                                        # 5
-      [ -35, 4, -67 ],                                       # 6
-      [ 65, 66, 37, -38, -52, 25, -58, -61 ],                # 7
-      [ 50, 43, 28, 68 ],                                    # 8
-      [ 27, 5, 7 ]                                           # 9
+  = [ [ -55, -27, 15, 21 ],                                    # 0
+      [ -61, -11, 6, 8, 28 ],                                  # 1
+      [ -59, -35, 3, 14, 16, 32, 38 ],                         # 2
+      [ -67, -30, -26, 23, 39, 62 ],                           # 3
+      [ -57, 4, 48 ],                                          # 4
+      [ -64, -51, -44, 17 ],                                   # 5
+      [ -54, -52, -33, 13, 29, 37, 69 ],                       # 6
+      [ -68, -53, -36, 5, 66 ],                                # 7
+      [ -49, -45, -43, -40, -34, -25, -20, -10, 9, 22, 56 ],   # 8
+      [ -65, -58, 7 ],                                         # 9
+      [ 1, 2, 31 ]                                             # 10
     ];
 
-# based on step07_data.pickle
-DIMCLUSTERs_ \
-  = [ [ 5, 7, -10, 27, -60, -30 ],                           # 0
-      [ 0, 1, -57, -64, 6 ],                                 # 1
-      [ -33, -39, 8, -9, -42, -44, -48, -19, 21, 55, -24 ],  # 2
-      [ -54, -26, 29, 14, -22 ],                             # 3
-      [ 16, -50, -43, -63 ],                                 # 4
-      [ -56, 3, 47 ],                                        # 5
-      [ 31, -34, 13, 15 ],                                   # 6
-      [ 65, 2, 66, 37, -38, -52, 25, -58, -61 ],             # 7
-      [ -32, 36, 68, 12, -51, -53, 28 ]                      # 8
-    ];
+# based on manual fiddling
 
-# based on step07_all_data.pickle plus manual fiddling
 DIMCLUSTERs \
-  = [ [ -26, 20, 14, -54 ]                                   # 0     # 0
-      + [ -27, -5, -7 ],                                     # -9
+  = [ [ -55, -27, 15, 21 ],                                    # 0  0
 
-      [ 32, 2, -34, -36, -12, 13, 15, 51, 53, 24, 31 ]       # 1     # 1
-      + [ 65, 66, 37, -38, -52, 25, -58, -61 ]               # 7      
-      + [ 33, 39, -8, 9, 42, 44, 48, 19, -21, -55 ]          # -3
-      + [ -50, -43, -28, -68 ]                               # -8
-      + [ -56, 3, 47 ]                                       # 5
-      + [ -35, 4, -67 ],                                     # 6
+      [ -61, -11, 6, 8, 28 ]                                   # 1  1
+      + [ -1, -2, -31 ]                                        # 10
+      + [ 57, -4, -48 ]                                        # 4
+      + [ 64, 51, 44, -17 ]                                    # 5
+      + [ 65, 58, -7 ],                                        # 9
 
-      [ -64, -57, 60, 6, -63 ]                               # 2     # 2
-      + [ 0, 1, 30 ],                                        # 4
+      [ -59, -35, 3, 14, 16, 32, 38 ]                          # 2  2
+      + [ 54, 52, 33, -13, -29, -37, -69 ]                     # 6
+      + [ -68, -53, -36, 5, 66 ]                               # 7
+      + [ 49, 45, 43, 40, 34, 25, 20, 10, -9, -22, -56 ]       # 8
+      + [ 67, 30, 26, -23, -39, -62 ],                         # 3
     ];
 
 
 
-def step15( datadir ):
+def step15( datadir, subsample ):
 
   data_pos = [];
   data_neg = [];
@@ -64,7 +54,7 @@ def step15( datadir ):
     data_neg.append( [] );
   print( data_pos, data_neg );
 
-  with open( datadir+'/step07_data.pickle', 'rb' ) as f:
+  with open( datadir+'/step07_'+subsample+'.pickle', 'rb' ) as f:
     data = pickle_load( f );
 
   rowcount = 0;
@@ -80,9 +70,9 @@ def step15( datadir ):
       nx = 0.0;
       for dim in dims:
         if dim < 0:
-          xval += -x[ 1+abs(dim) ];
+          xval += -x[ abs(dim)-1 ];
         else:
-          xval += x[ 1+abs(dim) ];
+          xval += x[ abs(dim)-1 ];
         nx += 1.0;        
       if y == '0':
         data_neg[ i ].append( xval/nx );
@@ -95,7 +85,7 @@ def step15( datadir ):
   print( np.cov( data_neg ) );
 
   n = len(DIMCLUSTERs);
-  ( fig, ax ) = plt.subplots( nrows = n, ncols = n, figsize = ( 6*n, 6*n ) );
+  ( fig, ax ) = plt.subplots( nrows = n, ncols = n, figsize = ( 3*n, 3*n ) );
 
   for i in range( 0, n ):
     for j in range( 0, n ):
@@ -106,13 +96,13 @@ def step15( datadir ):
       ax[i,j].plot( data_pos[i], data_pos[j], marker='o', color='r', linestyle='', alpha=0.66 );
       ax[i,j].set_title( str((i,j)) );
 
-  fig.savefig( datadir+'/step15_you_can_never_have_enough_plots.png' );
+  fig.savefig( datadir+'/step15.png' );
 
 
 
 def main( datadir ):
 
-  step15( datadir );
+  step15( datadir, 'data' );
 
 
 

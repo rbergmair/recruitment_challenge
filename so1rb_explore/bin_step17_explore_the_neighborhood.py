@@ -8,39 +8,45 @@ from functools import reduce;
 
 
 
+DIMCLUSTERs \
+  = [ [ -55, -27, 15, 21 ],                                    # 0
+      [ -61, -11, 6, 8, 28 ],                                  # 1
+      [ -59, -35, 3, 14, 16, 32, 38 ],                         # 2
+      [ -67, -30, -26, 23, 39, 62 ],                           # 3
+      [ -57, 4, 48 ],                                          # 4
+      [ -64, -51, -44, 17 ],                                   # 5
+      [ -54, -52, -33, 13, 29, 37, 69 ],                       # 6
+      [ -68, -53, -36, 5, 66 ],                                # 7
+      [ -49, -45, -43, -40, -34, -25, -20, -10, 9, 22, 56 ],   # 8
+      [ -65, -58, 7 ],                                         # 9
+      [ 1, 2, 31 ]                                             # 10
+    ];
+
+
+
 # all dimensions
 DIMs \
   = range(0,70);
 
-# interesting dimensions as per results from step 14
+# interesting dimensions from step 14
 DIMs \
-  = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 19, 20, 21, 22,
-      24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 42, 43,
-      44, 47, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60, 61, 63, 64, 65, 66,
-      67, 68 ];
+  = reduce( lambda x, y: x+y, DIMCLUSTERs )
 
 # handful of dimensions for testing
 DIMs \
-  = [ 0, 21, 42 ];
+  = [ 1, 22, 43 ];
 
-PTHRESHOLDs \
-  = [ 0.1, 0.2, 0.3, 0.4, 0.5 ];
-
-PTHRESHOLDs \
-  = [ 0.1, 0.2, 0.3 ];
-
-DTHRESHOLDs \
-  = [ ( 0.5 + 0.1417 * float(len(DIMs)-3) ) * float(i)/10.0 \
-        for i in range(5,15) ];
+USE_MAHALANOBIS \
+  = True;
 
 
 
-def step17( datadir ):
+def step17( datadir, subsample ):
 
   data_pos = [];
   data_neg = [];
 
-  with open( datadir+'/step07_data.pickle', 'rb' ) as f:
+  with open( datadir+'/step07_'+subsample+'.pickle', 'rb' ) as f:
     data = pickle_load( f );
 
   rowcount = 0;
@@ -48,12 +54,12 @@ def step17( datadir ):
   for ( y, x ) in data:
     
     rowcount += 1;
-    if rowcount > 10000:
+    if rowcount > 2500:
       break;
 
     row = [];
     for dim in DIMs:
-      row.append( x[1+dim] );
+      row.append( x[ abs(dim)-1 ] );
 
     if y == '0':
       data_neg.append( row );
@@ -62,10 +68,7 @@ def step17( datadir ):
 
   print( len(data_pos), len(data) );
   
-  dthresholds = DTHRESHOLDs;
-  pthresholds = PTHRESHOLDs
-
-  ratio = float( len(data_pos) ) / float( len(data) )
+  ratio = float( len(data_pos) ) / float( len(data) );
   
   pthresholds \
     = [ ratio * ( float(i) / 10.0 ) for i in range(5,26) ];
@@ -73,8 +76,8 @@ def step17( datadir ):
     = [ ( 0.5 + 0.1417 * float(len(DIMs)-3) ) * float(i)/10.0 \
         for i in range(5,16) ];
 
-  print( [ "{:1.4f}".format(p) for p in pthresholds ] );
-  print( [ "{:1.4f}".format(d) for d in dthresholds ] );
+  print( ", ".join( [ "{:1.4f}".format(p) for p in pthresholds ] ) );
+  print( ", ".join( [ "{:1.4f}".format(d) for d in dthresholds ] ) );
 
   cov = np.cov( np.array( data_pos+data_neg ).T );
   cov_inv = LA.inv( cov );
@@ -85,7 +88,7 @@ def step17( datadir ):
   data_pos = np.array( data_pos );
   data_neg = np.array( data_neg );
 
-  with open( datadir+'/step17_explore_the_neighborhood.csv', 'wt' ) as out:
+  with open( datadir+'/step17_'+subsample+'.csv', 'wt' ) as out:
 
     for p_threshold in pthresholds:
 
@@ -107,15 +110,23 @@ def step17( datadir ):
 
             pos_row_vec = pos_row.reshape(1,len(pos_row)).T;
             diff = pos_row_vec - ref_row_vec;
-            dist = np.sqrt( np.dot( np.dot( diff.T, cov_inv ), diff ) );
+            if USE_MAHALANOBIS:
+              dist = np.sqrt( np.dot( np.dot( diff.T, cov_inv ), diff ) );
+            else:
+              dist = LA.norm( diff );
+
             if dist <= d_threshold:
-              pos_in_vicinity.add( j );
+              pos_in_vicinity.add( j );             
 
           for (j,neg_row) in enumerate( data_neg ):
 
             neg_row_vec = neg_row.reshape(1,len(neg_row)).T;
             diff = neg_row_vec - ref_row_vec;
-            dist = np.sqrt( np.dot( np.dot( diff.T, cov_inv ), diff ) );
+            if USE_MAHALANOBIS:
+              dist = np.sqrt( np.dot( np.dot( diff.T, cov_inv ), diff ) );
+            else:
+              dist = LA.norm( diff );
+
             if dist <= d_threshold:
               neg_in_vicinity.add( j );
           
@@ -143,7 +154,8 @@ def step17( datadir ):
 
 def main( datadir ):
 
-  step17( datadir );
+  step17( datadir, 'data' );
+  # step17( datadir, 'all_data' );
 
 
 

@@ -11,25 +11,42 @@ BINARY_FEATs \
   = [ 9, 11, 14, 15, 22, 23, 25, 37, 39, 41, 44, 45, 46, 48, 49, 51, 55, 58,
       60, 64, 69, 70, 72, 73, 78, 83, 87, 89, 95, 99 ];
 
-# based on step07_all_data.pickle plus manual fiddling
+# based on step 14
 DIMCLUSTERs \
-  = [ [ -26, 20, 14, -54 ]                                   # 0     # 0
-      + [ -27, -5, -7 ],                                     # -9
+  = [ [ -55, -27, 15, 21 ],                                    # 0
+      [ -61, -11, 6, 8, 28 ],                                  # 1
+      [ -59, -35, 3, 14, 16, 32, 38 ],                         # 2
+      [ -67, -30, -26, 23, 39, 62 ],                           # 3
+      [ -57, 4, 48 ],                                          # 4
+      [ -64, -51, -44, 17 ],                                   # 5
+      [ -54, -52, -33, 13, 29, 37, 69 ],                       # 6
+      [ -68, -53, -36, 5, 66 ],                                # 7
+      [ -49, -45, -43, -40, -34, -25, -20, -10, 9, 22, 56 ],   # 8
+      [ -65, -58, 7 ],                                         # 9
+      [ 1, 2, 31 ]                                             # 10
+    ];
 
-      [ 32, 2, -34, -36, -12, 13, 15, 51, 53, 24, 31 ]       # 1     # 1
-      + [ 65, 66, 37, -38, -52, 25, -58, -61 ]               # 7      
-      + [ 33, 39, -8, 9, 42, 44, 48, 19, -21, -55 ]          # -3
-      + [ -50, -43, -28, -68 ]                               # -8
-      + [ -56, 3, 47 ]                                       # 5
-      + [ -35, 4, -67 ],                                     # 6
+# based on manual fiddling
 
-      [ -64, -57, 60, 6, -63 ]                               # 2     # 2
-      + [ 0, 1, 30 ],                                        # 4
+DIMCLUSTERs \
+  = [ [ -55, -27, 15, 21 ],                                    # 0  0
+
+      [ -61, -11, 6, 8, 28 ]                                   # 1  1
+      + [ -1, -2, -31 ]                                        # 10
+      + [ 57, -4, -48 ]                                        # 4
+      + [ 64, 51, 44, -17 ]                                    # 5
+      + [ 65, 58, -7 ],                                        # 9
+
+      [ -59, -35, 3, 14, 16, 32, 38 ]                          # 2  2
+      + [ 54, 52, 33, -13, -29, -37, -69 ]                     # 6
+      + [ -68, -53, -36, 5, 66 ]                               # 7
+      + [ 49, 45, 43, 40, 34, 25, 20, 10, -9, -22, -56 ]       # 8
+      + [ 67, 30, 26, -23, -39, -62 ],                         # 3
     ];
 
 
 
-def step15( datadir ):
+def step15( datadir, subsample ):
 
   data_pos = [];
   data_neg = [];
@@ -38,7 +55,7 @@ def step15( datadir ):
     data_neg.append( [] );
   print( data_pos, data_neg );
 
-  with open( datadir+'/step07_data.pickle', 'rb' ) as f:
+  with open( datadir+'/step07_'+subsample+'.pickle', 'rb' ) as f:
     data = pickle_load( f );
 
   rowcount = 0;
@@ -54,9 +71,9 @@ def step15( datadir ):
       nx = 0.0;
       for dim in dims:
         if dim < 0:
-          xval += -x[ 1+abs(dim) ];
+          xval += -x[ abs(dim)-1 ];
         else:
-          xval += x[ 1+abs(dim) ];
+          xval += x[ abs(dim)-1 ];
         nx += 1.0;        
       if y == '0':
         data_neg[ i ].append( xval/nx );
@@ -87,7 +104,7 @@ def step15( datadir ):
       rect_histy = [left_h, bottom, 0.2, height]
 
       # start with a rectangular Figure
-      fig = plt.figure(1, figsize=(8,8))
+      fig = plt.figure(1, figsize=(5,5))
 
       axScatter = plt.axes(rect_scatter)
       axHistx = plt.axes(rect_histx)
@@ -119,13 +136,13 @@ def step15( datadir ):
       axHistx.set_xlim( axScatter.get_xlim() )
       axHisty.set_ylim( axScatter.get_ylim() )      
 
-      fig.savefig( datadir+'/step16_seriously_you_can_never_have_enough_plots_{}_{}.png'.format( i, j ) );
+      fig.savefig( datadir+'/step16_{}_{}.png'.format( i, j ) );
 
 
 
 def main( datadir ):
 
-  step15( datadir );
+  step15( datadir, 'data' );
 
 
 

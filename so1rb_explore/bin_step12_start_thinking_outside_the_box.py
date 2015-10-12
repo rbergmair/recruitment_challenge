@@ -141,7 +141,7 @@ def step12( datadir ):
   print( '--> 1', neg_avg_x1, sqrt(neg_std_x1), pos_avg_x1, sqrt(pos_std_x1) );
   print( '--> 2', neg_avg_x2, sqrt(neg_std_x2), pos_avg_x2, sqrt(pos_std_x2) );
 
-  ( fig, ax ) = plt.subplots( nrows=1, ncols=2, figsize=(12,6) );
+  ( fig, ax ) = plt.subplots( nrows=1, ncols=2, figsize=(8,4) );
   ax[0].hist( [ neg_valsx1, pos_valsx1 ], 20, histtype='bar', color='br', label='rb' );  
   ax[1].hist( [ neg_valsx2, pos_valsx2 ], 20, histtype='bar', color='br', label='rb' );  
   fig.savefig( datadir+'/step12.png' );

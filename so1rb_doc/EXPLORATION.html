@@ -146,7 +146,7 @@ Dr Richard Bergmair
 <li>Having looked into the categorical and binary features a little, it’s now time to turn attention to the continuous variables.</li>
 <li>I started by slicing the data in various ways to obtain some meaningfully constructed samples that would allow some conclusions to be drawn that are universally true about the structure of the space induced by the continuous variables, even given that I’m not entirely sure if those variables are logically dependent on the category and/or the combination of binary features.</li>
 <li>So I constructed four subsamples:</li>
-<li>A sample across everything, capping at 10000 data points (<code>all</code>).</li>
+<li>A sample across everything, capping at 10000 data points (<code>all_data</code>).</li>
 <li>The category <code>0xe</code>, across all combinations of binary features, capping at 10000 data points (<code>catplane</code>).</li>
 <li>The binary combination <code>0x3fffffff</code>, across all categories, capping at 10000 data points (<code>binplane</code>).</li>
 <li>The combination <code>0xe.0x3fffffff</code> (<code>data</code>). There are only 2436 data points there in total, so no capping is needed.</li>
@@ -214,7 +214,7 @@ Dr Richard Bergmair
 <li>The best pair of dimensions achieves 36%.</li>
 <li>The best set of three dimensions achieves 60%, but that cell only contains 10 data points.</li>
 <li>The best set of four dimensions achieves 50%.</li>
-<li>The fact that it tails off after three suggests that there’s little point to continuing to look for central embedding in higher-dimensional spaces.</li>
+<li>The fact that the differences reverse direction after three dimensions suggests that there’s little point to continuing to look for central embedding in higher-dimensional spaces.</li>
 <li>Reiterating the experiment with <code>all_data</code>, capping at 2500 datapoints, the progression is 8%, 17%, 50%, 33%.</li>
 <li>So, that’s one more dead end.</li>
 </ul>
@@ -231,7 +231,7 @@ Dr Richard Bergmair
 <li>On the left hand side, the assumption is that the index is across all <span class="math">\(\mathtt{x}\)</span>’s, on the right hand side, just across the continuous ones.</li>
 <li>The spike in the middle, on the left hand side is due to the fact that zeroes and ones are a lot more frequent, due to the binary features playing into this.<br /></li>
 <li>No separation. Another day older and deeper in debt.</li>
-<li>But the idea was not as far fetched, as it may have sounded. This kind of data could come about, when the dimensions record, for example, signals from different sensors, but they are not meaningful at all times. For example, if they are cameras, and only one of them has the lens-cap off at any one time, and <span class="math">\(\mathtt{cid}\)</span> records which one, then this would be that type of scenario.</li>
+<li>But the idea was not as far fetched, as it may have sounded. This kind of data could come about when the dimensions record, for example, signals from different sensors, but they are not meaningful at all times. For example, if they are cameras, and only one of them has the lens-cap off at any one time, and <span class="math">\(\mathtt{cid}\)</span> records which one, then this would be that type of scenario.</li>
 </ul>
 </div>
 <div id="explore-this-further" class="slide section level1">
@@ -245,6 +245,89 @@ Dr Richard Bergmair
 <li>I did this without any filtering (top), and filtering out the zeroes and ones (bottom).</li>
 <li>So that’s what this is.</li>
 <li>Nothing here.</li>
+</ul>
+</div>
+<div id="clustering-dimensions-according-to-covariance" class="slide section level1">
+<h1>14: Clustering Dimensions According To Covariance</h1>
+<ul>
+<li>Next, I looked at the covariance matrix in some more detail. It turns out that some pairs of dimensions have rather a lot of covariance, some with a positive, some with a negative sign, and some have very little covariance.</li>
+<li>So, I thought I’d try to reiterate the idea from step 10 of doing sums, but I would do those sums only within clusters of highly correlated features.</li>
+<li>Going back to our stock market example: There might be industrial stocks, mining stocks, tech stocks, banking stocks, etc. Each of those market sectors would be a set of stocks that are mutually correlated, but less correlated with stocks in other sectors. So the individual stock return can be thought of as the sector return, plus a noise term (i.e. idiosyncratic risk).</li>
+<li>So what I did was to compute the covariance matrix using <a href="http://www.numpy.org/">numpy</a>, take an absolute of that, so as to discard the sign on each covariance, then use that as the affinity matrix for the agglomerative clustering procedure from <a href="http://scikit-learn.org/">scikit-learn</a>.</li>
+<li>I set the clustering procedure to look for 20 clusters, then discarded clusters that had only one or two dimensions. (Although, in theory, it’s perfectly possible that a cluster with only one dimension might be one that’s most useful to making the distinction).</li>
+<li>The clusters for subsample <code>data</code> were as follows:
+<ul>
+<li>-61, -11, 6, 8, 28</li>
+<li>-55, -27, 15, 21</li>
+<li>-59, -35, 3, 14, 16, 32, 38</li>
+<li>-67, -30, -26, 23, 39, 62</li>
+<li>-57, 4, 48</li>
+<li>-64, -51, -44, 17</li>
+<li>-54, -52, -33, 13, 29, 37, 69</li>
+<li>-68, -53, -36, 5, 66</li>
+<li>-49, -45, -43, -40, -34, -25, -20, -10, 9, 22, 56</li>
+<li>-65, -58, 7</li>
+<li>1, 2, 31</li>
+</ul></li>
+<li>Each of those lists is a cluster (think market sector), containing dimensions (think stocks in the sector).</li>
+<li>There was some variation in this result, as applied to the different subsamples (which is bad), but major portions of this clustering actually remained unaltered (which is good). In order to be able to proceed with only a single clustering, I decided to concatenate the four subsamples to get to a single clustering that I hoped would have some universality.</li>
+<li>The indexing on the dimensions starts with one, rather than zero.</li>
+<li>I apply a negative sign to all dimensions that have negative correlation with the first dimension in the cluster.</li>
+<li>This implies a frontend feature engineering step, whereby I turn the 70 individual dimensions into only 9 dimensions, each corresponding to a cluster. The value along each of the 9 dimensions is the average computed across those among the original 70 dimensions which are members of the cluster. For the dimensions with a negative sign, I flip the sign on the input value before adding it to the average.</li>
+<li>The idea behind the sign flipping is something along these lines: If the first cluster is stock options on tech stocks, and dimension 6 is an IBM call (where the price goes up when IBM stock goes up), and dimension 11 is a Microsoft put (where the price goes down when the Microsoft stock goes up), then they will be correlated negatively. By adding them together, you are actually cancelling out the interesting part of the risk, rather than reinforcing it. So this is where the sign flipping comes in.</li>
+</ul>
+</div>
+<div id="looking-at-that-in-a-plot" class="slide section level1">
+<h1>15: Looking At That In A Plot</h1>
+<div class="figure">
+<img src="step15b.png" />
+</div>
+<ul>
+<li>After generating the <a href="step15a.png" target="_blank">original plot</a> based on the clustering from the previous step, it turned out that there were still pairs of clusters that showed fairly high correlations.</li>
+<li>So I manually kept merging the clusters, until no obvious correlations were left, which left me with only three clusters:
+<ul>
+<li>-55, -27, 15, 21,</li>
+<li>-61, -11, 6, 8, 28, -1, -2, -31, 57, -4, -48, 64, 51, 44, -17, 65, 58, -7</li>
+<li>-59, -35, 3, 14, 16, 32, 38, 54, 52, 33, -13, -29, -37, -69, -68, -53, -36, 5, 66, 49, 45, 43, 40, 34, 25, 20, 10, -9, -22, -56, 67, 30, 26, -23, -39, -62</li>
+</ul></li>
+<li>The plot relating to the resulting clustering is what’s shown above.</li>
+<li>No separation emerges.</li>
+</ul>
+</div>
+<div id="looking-at-that-in-one-more-plot" class="slide section level1">
+<h1>16: Looking At That In One More Plot</h1>
+<div class="figure">
+<img src="step16_1_0.png" />
+</div>
+<div class="figure">
+<img src="step16_2_0.png" />
+</div>
+<div class="figure">
+<img src="step16_2_1.png" />
+</div>
+<ul>
+<li>I kind of like these little histograms on the chart axes to better visualize the relative densities in different regions of the space, when there’s a lot of overlap, like there is in this plot.</li>
+<li>But in this case, no interesting patterns emerge.</li>
+<li>Throughout steps 8–16, I would have really liked to find out about some feature engineering, that would allow me to see some proper separation between the positive and the negative class.</li>
+<li>But, having now directed a serious amount of work toward this effort, to no avail, I have decided that there may just not be any proper separation; that all there is to capture here is localized variations in the relative densities of positives vs negatives, with the proportion of positives never crossing the 50% boundary at all.</li>
+<li>So this rules out pretty much all of the machine learning methods that rely on discriminant functions, linear or otherwise.</li>
+<li>Rather, the method of choice here would have to be something with rather a “brute force” feel to it, such as nearest neighbor methods, although even a nearest neighbor approach would presumably need some tweaking, for example to the majority voting threshold, so that the positive class doesn’t simply get overwhelmed by the negative class.</li>
+</ul>
+</div>
+<div id="exploring-the-neighborhood" class="slide section level1">
+<h1>17: Exploring The Neighborhood</h1>
+<ul>
+<li>So: Localized variations in the relative densities of positives vs negatives is what I’m looking for.</li>
+<li>In order to get a better feel for that, I decided to explore the space immediately surrounding each positive datapoint.</li>
+<li>So I implemented a script to systematically try through a handful of distance thresholds and precision thresholds.</li>
+<li>Given a pair of thresholds, it would go through all positive datapoints, collect the set of all points no further away than the set distance. If the proportion of positives among those points is larger than the precision threshold, then they would all be classified as positives (even though the negatives might still outnumber the positives).</li>
+<li>By taking the union over all sets of points thus classified as positives, an f-measure can be obtained for each pair of distance threshold and precision threshold.</li>
+<li>Applying this to the <code>data</code> subsample, an f-measure of 40.5% is obtained, using distance threshold 5.81 and precision threshold 23%.</li>
+<li>On the <code>all_data</code> subsample, capping at 2500 samples, that optimum f-measure comes in at 16.8% for precision threshold at 3%. This is explained, at least to some extent, by the lower proportion of positives among the <code>all_data</code> subsample vs the <code>data</code> subsample. The distance threshold is at a nearby location, at 4.98.</li>
+<li>The above numbers were obtained using only those dimensions that weren’t discarded as irrelevant by the feature engineering study from step 14. Using all of the 70 dimensions instead (moving back to subsample <code>data</code>, rather than <code>all_data</code>), the optimal f-measure comes in at 39%, so it does seem like there is some noise in some of those extraneous dimensions discarded by the feature engineering.</li>
+<li>During development, I also used a set of three randomly chosen dimensions (0, 21, 42) for testing purposes. Oddly enough, it turned out that, at 40% f-measure, it does almost as well that the run using all of the dimensions (as chosen by the feature engineering from step 14).</li>
+<li>Using the Mahalanobis distance, instead of the regular Euclidean distance on this set of three dimensions, we can get as high as 41% f-measure.</li>
+<li>The fact that this 41% result is the best we’ve managed to obtain in this experiment, and that it relies on three randomly chosen dimensions suggests, that there is scope for further work on feature engineering and dimensionality reduction.</li>
 </ul>
 </div>
 </body>
