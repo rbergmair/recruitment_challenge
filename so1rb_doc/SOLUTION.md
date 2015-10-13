@@ -156,10 +156,82 @@ There are two stages to this:
 
 * Decorrelation (= orthogonalization): So as to transform the data into
   a space in which features are as close as possible to pairwise mutually
-  independent.
+  independent, which may or may not have the side effect of
+  dimensionality reduction.
 * Feature selection: So as to identify and remove any components in the
   decorrelated (orthogonalized) space, that are unrelated to the dependent
   variable $\mathrm{y}$.
+
+I will start by describing the components that play a role here, and
+then describe how to put them all together into a well-structured
+feature engineering framework.
+
+
+`BinaryFrontend`
+----------------
+
+The set of $30$ binary features
+$\mathrm{b}_1, \mathrm{b}_2, \ldots, \mathrm{b}_{30}$
+yields $2^{30} \approx 1\mathrm{G}$
+combinations of values.
+During the exploration stage of this project,
+however, it turned out that, within a training sample of
+$\approx 850\mathrm{k}$ data points, only $367$ combinations actually
+appeared in data, which lead me to conclude that there is a rich set
+of logical dependencies constraining the possibilities.  -- So there
+seems to be plenty of scope here to achieve decorrelation and
+dimensionality reduction through some kind of feature engineering.
+
+To better understand the phenomenon at play, consider the following
+example: In a table of horses, there might be a column $\mathrm{Gender}$,
+taking on values $\mathrm{Stallion}$ or $\mathrm{Mare}$, and a column
+$\mathrm{RegisteredStud}$, taking on values $\mathrm{Yes}$ or
+$\mathrm{No}$.  Obviously, only a stallion can be a registered stud.
+
+The type of feature engineering I'm suggesting here would combine this
+into one column $\mathrm{StudbookStatus}$ taking on values
+$\mathrm{RegisteredStud}$,
+$\mathrm{UnregisteredStallion}$ or $\mathrm{Mare}$.
+This would achieve decorrelation, meaning that the resulting
+representation is better behaved with regard to the independence assumptions
+that go into, for example, a Bayesian approach to the classification
+problem.  It also achieves dimensionality reduction.
+
+There is a drawback here: We're losing out on potentially
+useful generalizations over data.  For example, the set of male horses
+is a statistically and semantically coherent group, which we no longer
+capture, since we're now cutting through that group by forcing the distinction
+between registered studs and unregistered stallions.
+
+In a scenario where there is very little data, this could lead to problems
+if statistical cells become too small to allow for generalizations to become
+significant.  But in the particular problem at hand, it does seem to me like
+we have plenty of data relative to the data complexity of the classification
+problem we're trying to solve, and that therefore we need not worry about
+this.  So we would still have enough examples of registered studs and
+unregistered stallions so that generalizations pertaining to male horses in
+general will be able to take shape in a statistically significant manner
+within each subgroup, even without the benefit of taking into account data
+about male horses from the other subgroup.  But it remains true that this
+lumping-together comes at a cost, so we wouldn't want to do it
+unnecessarily.
+
+Applying this idea back to our $30$ binary features, that means that we
+wouldn't necessarily want to turn the binary features into just a single
+categorical variable taking on 367 values, and disregard all internal
+structure.  For example, it might well be that one of the binary features
+is largely independent, with the 367 combinations breaking apart into a 
+set of 183 combinations for the mutually dependent features, plus the value
+zero for the independent one, and a set of 184 combinations for the
+dependent features, plus the value one for the independent one.
+It would, in such a case, be much preferable to allow the independent
+feature to remain a distinct feature in its own right.
+
+
+
+
+How To Put It All Together
+--------------------------
 
 Within the decorrelation stage:
 
@@ -203,11 +275,7 @@ In what follows, I'll cover each of the frontend components in turn,
 describing how they work, and what benefit they achieve in terms of
 orthogonalization and dimensionality reduction.
 
-`BinaryFrontend`
-----------------
 
-A set of $30$ binary features yields $2^{30} \approx 1\mathrm{G}$
-combinations of values.
 
 
 

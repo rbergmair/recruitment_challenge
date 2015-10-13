@@ -6,15 +6,23 @@
 
 - There is another document (`SOLUTION`) which describes my solution to
   the SO1 algorithm challenge.  The present document (`EXPLORATION`)
-  describes the thought process that got me to that solution.  This is
-  the part that usually people aren't interested in.  So if you're not,
-  stop reading this, and refer to the other document.
+  is a braindump relating to the thought process that got me to that
+  solution.  This is the part that usually people aren't interested in.
+  So if you're not, stop reading this, and refer to the other document.
 - The code that goes with this thought process is under `so1rb_explore`.
 - I've decided to do this in the form of a slide show, so I can walk you
   through it, one idea at a time, using a flat structure, and associating
-  images with individual ideas.
-- If I were actually called upon to do a presentation, this is not how
-  I would normally structure a slide show.  -- Way too much text etc.
+  images with individual ideas. If I were actually called upon to do a
+  presentation, this is not how I would normally structure a slide show.
+  Way too much text etc.
+- I should stress that the absence of structure in this document is not
+  a result of the fact that I'm incapable of coming up with descriptive
+  section titles and structuring them in hierarchical form etc.
+  Rather the absence of structure is supposed to centre-stage
+  cognitive process over logical structure.  (Think "brainstorming", where
+  no criticism is allowed, or "stream of consciousness technique"
+  in creative writing, where you do a first draft without allowing for
+  any kind of editing, so as not to get distracted too early).
 
 # 1: I Separated Out Some Development Data
 
@@ -658,10 +666,40 @@
   little gain to be made through the use of an additional
   decorrelation technique such as Mahalanobis.  
 - But I chose to think about it differently: This shows that, even
-  when Mahalanobis doesn't help it also doesn't do any significant
+  though Mahalanobis doesn't help it also doesn't do any significant
   amount of damage, so for the sake of convenience, I decided to
   leave it in throughout the rest of this project, just so that
   correlation is one fewer thing to worry about.
+
+# 19: Exploring The Neighborhood Even More
+
+- So, all of this amounts to a workable approach to doing the feature
+  engineering for this classifier, but it's still prudent to compare
+  whatever I came up with, with whatever the good folks at 
+  [scikit-learn] came up with in terms of general purpose feature
+  engineering methods.
+- After trying through the out-of-the-box method for [PCA], as well as
+  [Kernel PCA] with various different kernels, it turned out that
+  the cosine kernel performed pretty well, at 42.50% f-measure.
+
+# 20: Look At This In A Plot
+
+![](step20a.png)
+![](step20b.png)
+
+- So, I thought I should really look at this in a plot, before taking
+  it any further.  This is what it looks like for subsamples
+  `data` (top) and `all_data` (bottom).
+
+# Conclusion
+
+- So this process of exploration exposed me to a semi-structured set
+  of experiences with this dataset that informed the design of
+  a submission-ready solution.
+- You may now delete the code under `so1rb_exploration` and
+  continue your reading with document `SOLUTION`` to find out about
+  how I put everything together.
+
 
 
 
@@ -679,3 +717,5 @@
 [my video lecture on methodology]: http://www.utopia-refraktor.com/en/blog/tech-talks/machine-learning/2015/01/evaluation-methodology
 [scikit-learn]: http://scikit-learn.org/
 [numpy]: http://www.numpy.org/
+[PCA]: http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+[Kernel PCA]: http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.KernelPCA.html
