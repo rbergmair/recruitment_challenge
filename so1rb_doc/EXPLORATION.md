@@ -49,7 +49,7 @@
   estimate of the ultimate performance, I would then use cross-validation.
 - As part of my very initial step of processing the data, I find it useful
   to reshuffle the data using a random-number generator.
-- Running exploration scrips on the entirety of the data can often take
+- Running exploration scripts on the entirety of the data can often take
   a long time, which is a drag on my productivity, especially in the
   exploration stage.  So I often end up putting a `break` statement into
   the loop reading the data, so as to stop reading after a large enough
@@ -59,7 +59,7 @@
   could be an artefact of the indexing structure or the insertion order,
   and you end up looking not at a random sample, but rather at only old
   data, or only data where certain columns have certain values, etc.
-- So it's better to just reshuffle, and be on the safe side.
+  So it's better to just reshuffle, and be on the safe side.
 
 # 2: What's This `cid` thing?
 
@@ -78,10 +78,10 @@
   $\mathtt{cid} = 16$ only has 2.5% positives, so it seems quite relevant
   to the dependent variable.
 - Neither the total number of data points, nor the proportion of positives
-  seems to be an obvious function `cid`, neither its ordinal nor its
+  seems to be an obvious function of `cid`, neither its ordinal nor its
   cardinal value, so I'll treat it as a discrete symbol, rather than as a
   numeric value.
-- It's important to make a conscious decision on that one: For example, if
+- It's important to make a conscious decision on that one.  An example: If
   you're working on a database dump, and the data contains information
   about cars, then there could be a column `car_type`, where value 101
   means motorcycle, value 42 means sedan, value 3 means mini truck,
@@ -89,7 +89,7 @@
   could be `horsepower`, which would also be a number.  Now, you could
   easily use `horsepower` as an ordinal or cardinal number, perhaps as
   a feature in a linear discriminant, but it would be complete nonsense
-  to do this, with `car_type`, despite the fact that both of them,
+  to do this with `car_type`, despite the fact that both of them,
   prima facie, look like numbers.  This is a common rookie mistake.
 - Another thing that's noteworthy here, is that the proportion of positives
   never crosses the 50% boundary.  If there were values for
@@ -145,28 +145,33 @@
   if it's not a motorcycle.  -- This yields a model that makes
   apples-to-apples comparisons.  Otherwise the horsepower column would become
   to a large extent a proxy for the distinction between motorcycle and truck,
-  which, however, needs to be treated as a separate piece of information.
-  -- If there's a need to do this kind of feature engineering, it's important  
-  to know about it early on.
+  which, however, needs to be treated as a separate piece of
+  information. -- If there's a need to do this kind of feature engineering,
+  it's important to know about it early on.
 
 - At some point, this classifier will need to be able to combine evidence
   from the discrete variable with evindence from the continuous variables.
   There are two ways of going about this:
+
     + One could treat them as logically dependent, meaning that you would
       train one model that captures the continuous variables and that applies
       only to datapoints with, say $\mathtt{cid} = 8$, and a completely
       separate model that applies only to datapoints with, say
       $\mathtt{cid} = 42$.
+
     + One could treat them as logically independent, so that you train some
       model on all data, ignoring the $\mathtt{cid}$ value, and then integrate
       the evidence from $\mathtt{cid}$ by merely shifting a decision threshold
       or a bias term, or something like that.
-  Consider two examples:
+
+- Consider two examples:
+
     + You have a database of wine sales, with a categorical variable
       `audience`, which can take on values of `preppie` and `wino`.
       You might find a positive correlation between price and sales among
       preppies, but a negative correlation among winos.  In such a case you
       would treat price and sales as logically dependent on audience.
+
     + You have a database of horses, with a categorical variable `color`
       and some variables `height` and `weight`.  You might find that `color`
       does not affect the relationship between the other variables
@@ -175,6 +180,7 @@
       homogeneously behaved when it comes to describing the relationship
       between `height` and weight.
       So you would treat those as logically independent.
+
   Again, this distinction is a distinction you would want to know about
   early on in the process.  If there's a logical dependency you want to
   make sure, you're looking at statistically homogeneous subsets of the data
@@ -268,14 +274,14 @@
   in it (that number being 72215).
 - One can further combine that with the category, to obtain the combination
   with category $14$ (denoted `0xe.0x3fffffff`) as the most frequent one.
-- The combination `0x3fffffff` also exhibits a fairly high density of
+- The combination `0x3fffffff` also exhibits a fairly high proportion of
   positive datapoints, at 10%.  Only one other combination has an even
   higher density of positives. That is `0x3dfe7f5f`, which as 12%.
 - It might well be that every one of the binary features, more or less,
   has the effect of accumulating additional evidence in support of a
   positive decision.  I'll make a mental note of that.  The Bayesian method
   should be able to assign weights appropriately.
-- In combination with category values, the density of positives can go
+- In combination with category values, the proportion of positives can go
   even higher: `0xe.0x3fffffff` has as many as 16% (total number of data
   points 2436).
 - Combination `0x18.0x1fd57fcf` has as many as 50% positives, but is only
@@ -359,7 +365,7 @@
 - For subsamples `binplane`, `catplane`, and `all` there were no pairs
   of dimensions yielding any cells with more than 50% positive datapoints
   at all.
-- Shifts in medians seemd low across the board, so nothing much
+- Shifts in medians seemd low across the board, so there's nothing much
   interesting there either.
 
 # 9: Look At That In A Plot
@@ -631,7 +637,7 @@
 - During development, I also used a set of three randomly chosen
   dimensions (0, 21, 42) for testing purposes.  Oddly enough,
   it turned out that, at 40% f-measure, it does almost as well
-  that the run using all of the dimensions (as chosen by the
+  as the run using all of the dimensions (as chosen by the
   feature engineering from step 14).
 - Using the Mahalanobis distance, instead of the regular Euclidean
   distance on this set of three dimensions, we can get
@@ -697,7 +703,7 @@
   of experiences with this dataset that informed the design of
   a submission-ready solution.
 - You may now delete the code under `so1rb_exploration` and
-  continue your reading with document `SOLUTION`` to find out about
+  continue your reading with document `SOLUTION` to find out about
   how I put everything together.
 
 

@@ -10,58 +10,44 @@ from functools import reduce;
 
 
 
-# based on step07_all_data.pickle
 DIMCLUSTERs \
-  = [ [ -26, 20, 14, -54 ],                                  # 0
-      [ 32, 2, -34, -36, -12, 13, 15, 51, 53, 24, 31 ],      # 1
-      [ -64, -57, 60, 6, -63 ],                              # 2
-      [ -33, -39, 8, -9, -42, -44, -48, -19, 21, 55 ],       # 3
-      [ 0, 1, 30 ],                                          # 4
-      [ -56, 3, 47 ],                                        # 5
-      [ -35, 4, -67 ],                                       # 6
-      [ 65, 66, 37, -38, -52, 25, -58, -61 ],                # 7
-      [ 50, 43, 28, 68 ],                                    # 8
-      [ 27, 5, 7 ]                                           # 9
+  = [ [ -55, -27, 15, 21 ],                                    # 0
+      [ -61, -11, 6, 8, 28 ],                                  # 1
+      [ -59, -35, 3, 14, 16, 32, 38 ],                         # 2
+      [ -67, -30, -26, 23, 39, 62 ],                           # 3
+      [ -57, 4, 48 ],                                          # 4
+      [ -64, -51, -44, 17 ],                                   # 5
+      [ -54, -52, -33, 13, 29, 37, 69 ],                       # 6
+      [ -68, -53, -36, 5, 66 ],                                # 7
+      [ -49, -45, -43, -40, -34, -25, -20, -10, 9, 22, 56 ],   # 8
+      [ -65, -58, 7 ],                                         # 9
+      [ 1, 2, 31 ]                                             # 10
     ];
 
-# based on step07_data.pickle
 DIMCLUSTERs \
-  = [ [ 5, 7, -10, 27, -60, -30 ],                           # 0
-      [ 0, 1, -57, -64, 6 ],                                 # 1
-      [ -33, -39, 8, -9, -42, -44, -48, -19, 21, 55, -24 ],  # 2
-      [ -54, -26, 29, 14, -22 ],                             # 3
-      [ 16, -50, -43, -63 ],                                 # 4
-      [ -56, 3, 47 ],                                        # 5
-      [ 31, -34, 13, 15 ],                                   # 6
-      [ 65, 2, 66, 37, -38, -52, 25, -58, -61 ],             # 7
-      [ -32, 36, 68, 12, -51, -53, 28 ]                      # 8
-    ];
+  = [ [ -55, -27, 15, 21 ],                                    # 0  0
 
-# based on step07_all_data.pickle plus manual fiddling (best)
-DIMCLUSTERs \
-  = [ [ -26, 20, 14, -54 ]                                   # 0     # 0
-      + [ -27, -5, -7 ],                                     # -9
+      [ -61, -11, 6, 8, 28 ]                                   # 1  1
+      + [ -1, -2, -31 ]                                        # 10
+      + [ 57, -4, -48 ]                                        # 4
+      + [ 64, 51, 44, -17 ]                                    # 5
+      + [ 65, 58, -7 ],                                        # 9
 
-      [ 32, 2, -34, -36, -12, 13, 15, 51, 53, 24, 31 ]       # 1     # 1
-      + [ 65, 66, 37, -38, -52, 25, -58, -61 ]               # 7      
-      + [ 33, 39, -8, 9, 42, 44, 48, 19, -21, -55 ]          # -3
-      + [ -50, -43, -28, -68 ]                               # -8
-      + [ -56, 3, 47 ]                                       # 5
-      + [ -35, 4, -67 ],                                     # 6
-
-      [ -64, -57, 60, 6, -63 ]                               # 2     # 2
-      + [ 0, 1, 30 ],                                        # 4
+      [ -59, -35, 3, 14, 16, 32, 38 ]                          # 2  2
+      + [ 54, 52, 33, -13, -29, -37, -69 ]                     # 6
+      + [ -68, -53, -36, 5, 66 ]                               # 7
+      + [ 49, 45, 43, 40, 34, 25, 20, 10, -9, -22, -56 ]       # 8
+      + [ 67, 30, 26, -23, -39, -62 ],                         # 3
     ];
 
 
-def step17( datadir, n_components ):
 
-  n_components = int(n_components);
+def step19( datadir, subsample, kernel ):
 
   data_ = [];
   classlabels = [];
 
-  with open( datadir+'/step07_data.pickle', 'rb' ) as f:
+  with open( datadir+'/step07_'+subsample+'.pickle', 'rb' ) as f:
     data__ = pickle_load( f );
 
   posdims = [];
@@ -69,9 +55,9 @@ def step17( datadir, n_components ):
   for dimcluster in DIMCLUSTERs:
     for dim in dimcluster:
       if dim < 0:
-        negdims.append( abs(dim) );
+        negdims.append( abs(dim)-1 );
       else:
-        posdims.append( abs(dim) );
+        posdims.append( abs(dim)-1 );
 
   rowcount = 0;
   poscnt = 0;
@@ -80,11 +66,11 @@ def step17( datadir, n_components ):
   for ( y, x ) in data__:
     
     rowcount += 1;
-    if rowcount > 10000:
+    if rowcount > 2500:
       break;
 
     row = [];
-    for (dim,xval) in enumerate(x[1:]):
+    for (dim,xval) in enumerate(x):
       if dim in posdims:
         row.append( xval );
       elif dim in negdims:
@@ -108,18 +94,21 @@ def step17( datadir, n_components ):
 
   ratio = float( poscnt ) / float( poscnt+negcnt );
 
-  data = KernelPCA( n_components=n_components, kernel='cosine' ).fit_transform( data_ );
+  if kernel == 'pca':
+    data = PCA( n_components=3 ).fit_transform( data_ );
+  else:
+    data = KernelPCA( n_components=3, kernel=kernel ).fit_transform( data_ );
 
   print( data[0] );
 
   pthresholds \
     = [ ratio * ( float(i) / 10.0 ) for i in range(5,26) ];
   dthresholds \
-    = [ ( 0.5 + 0.1417 * float(n_components-3) ) * float(i)/10.0 \
+    = [ ( 0.5 + 0.1417 * float(3-3) ) * float(i)/10.0 \
         for i in range(5,15) ];
 
-  print( " ".join( [ "{:1.4f}".format(p) for p in pthresholds ] ) );
-  print( " ".join( [ "{:1.4f}".format(d) for d in dthresholds ] ) );
+  print( ", ".join( [ "{:1.4f}".format(p) for p in pthresholds ] ) );
+  print( ", ".join( [ "{:1.4f}".format(d) for d in dthresholds ] ) );
 
   cov = np.cov( data.T );
   cov_inv = LA.inv( cov );
@@ -127,7 +116,7 @@ def step17( datadir, n_components ):
   print( cov );
   print( cov_inv );
 
-  with open( datadir+'/step19_explore_the_neighborhood_even_more_{}.csv'.format( n_components ), 'wt' ) as out:
+  with open( datadir+'/step19_{}.csv'.format( kernel ), 'wt' ) as out:
 
     for p_threshold in pthresholds:
 
@@ -152,7 +141,6 @@ def step17( datadir, n_components ):
 
             row_vec = row.reshape(1,len(row)).T;
             diff = row_vec - ref_row_vec;
-            # dist = LA.norm( diff );
             dist = np.sqrt( np.dot( np.dot( diff.T, cov_inv ), diff ) );
             if dist <= d_threshold:
               if classlabels[j] == 0:
@@ -183,9 +171,9 @@ def step17( datadir, n_components ):
 
 
 
-def main( datadir, n_components ):
+def main( datadir ):
 
-  step17( datadir, n_components );
+  step19( datadir, 'data', 'cosine' );
 
 
 

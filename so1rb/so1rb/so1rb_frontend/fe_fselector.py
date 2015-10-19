@@ -406,7 +406,7 @@ class FeatureSelector( Frontend ):
            for ( h_ab, i ) \
            in sorted( output_correlation, reverse=True )[ :3 ] };
 
-    if False:
+    if True:
       print(
           "core = ",
           " ".join([ self._fmt_dim(d) for d in self._core_dims ])
@@ -456,7 +456,7 @@ class FeatureSelector( Frontend ):
                .format( *(corr,h_a,h_b,h_ab,mi) )
             );
 
-    if False:
+    if True:
 
       print(
           "satellite = ",
@@ -468,7 +468,7 @@ class FeatureSelector( Frontend ):
       if i not in self._core_dims and i not in self._satellite_dims:
         self._removed_dims.add( i );
 
-    if False:
+    if True:
 
       print(
           "removed = ",
