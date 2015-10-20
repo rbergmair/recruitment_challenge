@@ -122,6 +122,10 @@ is a one-way ticket to the trash bin.
  
 _In case you're interested_, you can see how well you stack up [against previous participants](https://github.com/Segment-of-One/recruitment_challenge/wiki/Leader-Board).
 
+---
+\* So1 doesn't actually offer experimental hair surgery as an explicit employee benefit. Maybe the German goverment might, though!
+
+
 [Python] https://www.python.org/downloads/
 [kyotocabinet] http://fallabs.com/kyotocabinet/pkg/
 [kyotocabinet-python] http://fallabs.com/kyotocabinet/pythonpkg/
@@ -130,6 +134,3 @@ _In case you're interested_, you can see how well you stack up [against previous
 [numpy] https://github.com/numpy/
 [scikit-learn] https://pypi.python.org/pypi/scikit-learn/0.15.2
 [matplotlib] http://sourceforge.net/projects/matplotlib/
-
----
-\* So1 doesn't actually offer experimental hair surgery as an explicit employee benefit. Maybe the German goverment might, though!
