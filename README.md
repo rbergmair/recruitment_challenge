@@ -20,6 +20,10 @@ There are four parts to this archive:
 * `so1rb_doc/EXPLORATION.html` describes the process of how I explored the
   data which informed the solution I came up with.
 
+To generate documentation from source, you will need
+[pandoc](http://www.pandoc.org/) (I used 1.12.2.1).  Use the Makefile
+provided under `so1rb_doc/Makefile`.
+
 ### Software Prerequisites
 
 I'm listing the versions I used for development and testing.  It probably
@@ -42,16 +46,16 @@ For `so1rb_explore` you will also need
 There is a script to generate a zip file for each of `so1rb` and
 `so1rb_explore`.
 
-    ```
-    pack.sh
-    ```
+```
+pack.sh
+```
 
 You can then conveniently run the zip file from python:
 
-    ```
-    python3 so1rb_explore.zip step01_separate_dev_data /dta/so1
-    python3 so1rb.zip so1rb01_separate_dev_data /dta/so1
-    ```
+```
+python3 so1rb_explore.zip step01_separate_dev_data /dta/so1
+python3 so1rb.zip so1rb01_separate_dev_data /dta/so1
+```
 
 The first argument is always the path to a directory where the scripts
 will read input files and write output files.
