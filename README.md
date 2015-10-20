@@ -63,6 +63,28 @@ will read input files and write output files.
 For the scripts in `so1rb_explore`, this is the only argument required,
 everything else being hardcoded.
 
+For `so1rb`, the call signatures are as follows:
+* `so1rb01_separate_dev_data [working dir]`
+* `so1rb02_fit_frontend [working dir]`
+* `so1rb03_fit_discretizer [working dir]`
+* `so1rb04_fit_fselector [working dir]`
+* `so1rb05_fit_model [working dir] [model filename]`,
+  where `[model filename]` needs to be one of `mdlp.kch` if you'd like
+  to fit a model with homebrew feature engineering or `mdlq.kch` if you'd
+  like to fit a model with KPCA feature engineering.
+* `so1rb06_run_model [working dir] [model filename] [data filename]`
+  where `[model filename]` is as before (now being read, not written),
+  and `[data filename]` is the name of a the data you'd like to fit
+  the model to.
+* `so1rb07_evaluate_run [working dir] [data filename] [run filename]`
+  where `[data filename]` is as before (now being read, not written),
+  and `[run filename]` is the name of an output file generated
+  by `so1rb06_run_model`.
+
+Filenames are referred to without path prefix (it is assumed that they
+reside in `[working dir]`.  Data files are not unpacked, but rather they
+are always read from or written to such as to assume `gzip` compression.
+
 # So1 Algorithm Team's Recruitment Challenge
 
 Here at So1, we ("the algo" team) do your typical data-science-y things:
