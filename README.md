@@ -1,3 +1,64 @@
+# RB's Approach to So1's Recruitment Challenge
+
+Just a few comments as a point of departure in working with this repository:
+
+There are four parts to this archive:
+1. `predictions.tsv.gz` is the file containing the model predictions for
+   my submission.
+2. `so1rb_doc` contains the documentation
+3. `so1rb` is a reusable python package including a set of scripts for
+   fitting a model and running it on data.
+4. `so1rb_explore` is a sequence of self-contained python scripts that I
+   used to explore the data.
+
+### Documentation
+
+* `so1rb_doc/SOLUTION.html` is a description of what's under `so1rb`,
+  with a description of what it is the code does, without, however,
+  going into detail on why I believe that solution is the right
+  solution to the problem.
+* `so1rb_doc/EXPLORATION.html` describes the process of how I explored the
+  data which informed the solution I came up with.
+
+### Software Prerequisites
+
+I'm listing the versions I used for development and testing.  It probably
+works with other versions, too, but there are no guarantees, obviously.
+
+1. [Python] 3.4.2
+2. [kyotocabinet] 1.2.76
+   plus [kyotocabinet-python] 1.22
+3. [leveldb] 0.193
+   plus [plyvel] 0.9
+4. [numpy] 1.9.0
+5. [scikit-learn] 0.15.2
+
+For `so1rb_explore` you will also need
+
+6. [matplotlib] 1.4.0
+
+### Getting Started Running the Software
+
+There is a script to generate a zip file for each of `so1rb` and
+`so1rb_explore`.
+
+    ```
+    pack.sh
+    ```
+
+You can then conveniently run the zip file from python:
+
+    ```
+    python3 so1rb_explore.zip step01_separate_dev_data /dta/so1
+    python3 so1rb.zip so1rb01_separate_dev_data /dta/so1
+    ```
+
+The first argument is always the path to a directory where the scripts
+will read input files and write output files.
+
+For the scripts in `so1rb_explore`, this is the only argument required,
+everything else being hardcoded.
+
 # So1 Algorithm Team's Recruitment Challenge
 
 Here at So1, we ("the algo" team) do your typical data-science-y things:
@@ -60,6 +121,15 @@ is a one-way ticket to the trash bin.
     * Decision boundaries or other interesting clustering results/visualizations
  
 _In case you're interested_, you can see how well you stack up [against previous participants](https://github.com/Segment-of-One/recruitment_challenge/wiki/Leader-Board).
+
+[Python] https://www.python.org/downloads/
+[kyotocabinet] http://fallabs.com/kyotocabinet/pkg/
+[kyotocabinet-python] http://fallabs.com/kyotocabinet/pythonpkg/
+[leveldb] https://github.com/google/leveldb
+[plyvel] https://pypi.python.org/pypi/plyvel
+[numpy] https://github.com/numpy/
+[scikit-learn] https://pypi.python.org/pypi/scikit-learn/0.15.2
+[matplotlib] http://sourceforge.net/projects/matplotlib/
 
 ---
 \* So1 doesn't actually offer experimental hair surgery as an explicit employee benefit. Maybe the German goverment might, though!
