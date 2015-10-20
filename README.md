@@ -25,17 +25,17 @@ There are four parts to this archive:
 I'm listing the versions I used for development and testing.  It probably
 works with other versions, too, but there are no guarantees, obviously.
 
-1. [Python] 3.4.2
-2. [kyotocabinet] 1.2.76
-   plus [kyotocabinet-python] 1.22
-3. [leveldb] 0.193
-   plus [plyvel] 0.9
-4. [numpy] 1.9.0
-5. [scikit-learn] 0.15.2
+1. [Python](https://www.python.org/downloads/) 3.4.2
+2. [kyotocabinet](http://fallabs.com/kyotocabinet/pkg/) 1.2.76
+   plus [kyotocabinet-python](http://fallabs.com/kyotocabinet/pythonpkg/) 1.22
+3. [leveldb](https://github.com/google/leveldb) 0.193
+   plus [plyvel](https://pypi.python.org/pypi/plyvel) 0.9
+4. [numpy](https://github.com/numpy/) 1.9.0
+5. [scikit-learn](https://pypi.python.org/pypi/scikit-learn/0.15.2) 0.15.2
 
 For `so1rb_explore` you will also need
 
-6. [matplotlib] 1.4.0
+6. [matplotlib](http://sourceforge.net/projects/matplotlib/) 1.4.0
 
 ### Getting Started Running the Software
 
@@ -124,13 +124,3 @@ _In case you're interested_, you can see how well you stack up [against previous
 
 ---
 \* So1 doesn't actually offer experimental hair surgery as an explicit employee benefit. Maybe the German goverment might, though!
-
-
-[Python] https://www.python.org/downloads/
-[kyotocabinet] http://fallabs.com/kyotocabinet/pkg/
-[kyotocabinet-python] http://fallabs.com/kyotocabinet/pythonpkg/
-[leveldb] https://github.com/google/leveldb
-[plyvel] https://pypi.python.org/pypi/plyvel
-[numpy] https://github.com/numpy/
-[scikit-learn] https://pypi.python.org/pypi/scikit-learn/0.15.2
-[matplotlib] http://sourceforge.net/projects/matplotlib/
