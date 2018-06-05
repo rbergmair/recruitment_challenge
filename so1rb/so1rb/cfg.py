@@ -1,1 +1,0 @@
-dtadir = None;
