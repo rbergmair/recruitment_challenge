@@ -1,0 +1,17 @@
+.*
+*~
+*.o
+*.so
+*.a
+*.pyc
+*.iml
+__pycache__
+build
+dist
+bin
+target
+gradle
+gradlew*
+addons.scss
+styles.css
+

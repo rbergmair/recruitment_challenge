@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Dr Richard Bergmair" />
+  <title>How RB Figured Out His Approach to SO1’s Algorithm Challenge</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+    href="myslidy.css" />
+  <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <script src="http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js"
+    charset="utf-8" type="text/javascript"></script>
+</head>
+<body>
+<div class="slide titlepage">
+  <h1 class="title">How RB Figured Out His Approach to SO1’s Algorithm Challenge</h1>
+  <p class="author">
+Dr Richard Bergmair
+  </p>
+  <p class="date">Oct-10 2015</p>
+</div>
+<div id="about-this-document" class="slide section level1">
+<h1>0: About This Document</h1>
+<ul>
+<li>There is another document (<code>SOLUTION</code>) which describes my solution to the SO1 algorithm challenge. The present document (<code>EXPLORATION</code>) is a braindump relating to the thought process that got me to that solution. This is the part that usually people aren’t interested in. So if you’re not, stop reading this, and refer to the other document.</li>
+<li>The code that goes with this thought process is under <code>so1rb_explore</code>.</li>
+<li>I’ve decided to do this in the form of a slide show, so I can walk you through it, one idea at a time, using a flat structure, and associating images with individual ideas. If I were actually called upon to do a presentation, this is not how I would normally structure a slide show. Way too much text etc.</li>
+<li>I should stress that the absence of structure in this document is not a result of the fact that I’m incapable of coming up with descriptive section titles and structuring them in hierarchical form etc. Rather the absence of structure is supposed to centre-stage cognitive process over logical structure. (Think “brainstorming”, where no criticism is allowed, or “stream of consciousness technique” in creative writing, where you do a first draft without allowing for any kind of editing, so as not to get distracted too early).</li>
+</ul>
+</div>
+<div id="i-separated-out-some-development-data" class="slide section level1">
+<h1>1: I Separated Out Some Development Data</h1>
+<ul>
+<li>I took the training data that I was provided, and split it into an 85% portion for actual training data, and a 15% portion for development data. – Henceforth, when I say training data, or make no explicit statement at all as to which portion of the data I’m talking about, this 85% portion is what I will be referring to.</li>
+<li>Throughout the rest of the exploration stage of the process as described in this document, I only look at training data. This allows me to use the development data later on to get a sense of where my evaluation measure is likely to end up when I submit the results for use on the actual test data, while keeping <a href="https://en.wikipedia.org/wiki/Data_dredging">data snooping bias</a> to a minimum. (Also see <a href="http://www.utopia-refraktor.com/en/blog/tech-talks/machine-learning/2015/01/evaluation-methodology">my video lecture on methodology</a>).</li>
+<li>It seems that, with this example project, we’re in the situation of having plenty of data, although that is obviously a very relative term. – relative to the phenomena in the data that you’re trying to capture and the data complexity they imply.</li>
+<li>In a project where data is rather on the scarce side, I wouldn’t give up on 15% of the data so easily. I would then just use the entire training data for exploration, as long as I only use it to look at stuff, rather than to select a model from a large model space. In order to get an estimate of the ultimate performance, I would then use cross-validation.</li>
+<li>As part of my very initial step of processing the data, I find it useful to reshuffle the data using a random-number generator.</li>
+<li>Running exploration scripts on the entirety of the data can often take a long time, which is a drag on my productivity, especially in the exploration stage. So I often end up putting a <code>break</code> statement into the loop reading the data, so as to stop reading after a large enough dataset has been read in.</li>
+<li>This, obviously, is bound to go horribly wrong if the dataset came out of a database dump, for example, where the ordering of the data could be an artefact of the indexing structure or the insertion order, and you end up looking not at a random sample, but rather at only old data, or only data where certain columns have certain values, etc. So it’s better to just reshuffle, and be on the safe side.</li>
+</ul>
+</div>
+<div id="whats-this-cid-thing" class="slide section level1">
+<h1>2: What’s This <code>cid</code> thing?</h1>
+<ul>
+<li>Since this <code>cid</code> column is the only one that, at very first sight, stands out, I started by counting the number of positive datapoints, and the total number of datapoints associated with each value for <code>cid</code>.</li>
+<li>By a positive datapoint, I mean a line in the CSV file with <span class="math">\(\mathtt{y} = 1\)</span>.</li>
+<li>It turns out that <code>cid</code> can take on 50 different values, from 1 to 50.</li>
+<li>They are very unevenly populated, with <span class="math">\(\mathtt{cid} = 16\)</span> appearing 87 times and <span class="math">\(\mathtt{cid} = 3\)</span> appearing 26477 times.</li>
+<li>They imply different distributions for positive vs negative datapoints. For example <span class="math">\(\mathtt{cid} = 50\)</span> has 11.65% positives, while <span class="math">\(\mathtt{cid} = 16\)</span> only has 2.5% positives, so it seems quite relevant to the dependent variable.</li>
+<li>Neither the total number of data points, nor the proportion of positives seems to be an obvious function of <code>cid</code>, neither its ordinal nor its cardinal value, so I’ll treat it as a discrete symbol, rather than as a numeric value.</li>
+<li>It’s important to make a conscious decision on that one. An example: If you’re working on a database dump, and the data contains information about cars, then there could be a column <code>car_type</code>, where value 101 means motorcycle, value 42 means sedan, value 3 means mini truck, and value 7 means a tractor unit for a road train. Another column could be <code>horsepower</code>, which would also be a number. Now, you could easily use <code>horsepower</code> as an ordinal or cardinal number, perhaps as a feature in a linear discriminant, but it would be complete nonsense to do this with <code>car_type</code>, despite the fact that both of them, prima facie, look like numbers. This is a common rookie mistake.</li>
+<li>Another thing that’s noteworthy here, is that the proportion of positives never crosses the 50% boundary. If there were values for <span class="math">\(\mathtt{cid}\)</span> above and below 50%, then that would in and of itself imply a classifier that can improve over baseline in terms of accuracy, by looking at <span class="math">\(\mathtt{cid}\)</span> and nothing else. But unfortunately, that’s not the case here.</li>
+</ul>
+</div>
+<div id="looking-into-those-mathttxs-by-way-of-plot." class="slide section level1">
+<h1>3: Looking Into Those <span class="math">\(\mathtt{x}\)</span>’s By Way Of Plot.</h1>
+<div class="figure">
+<img src="step03.png" />
+</div>
+<ul>
+<li><p>I picked two of those categories at random, in this case categories 8 and 42.</p></li>
+<li><p>I picked four of the <span class="math">\(\mathtt{x}\)</span>’s at randdom, in this case <span class="math">\(\mathtt{x}_1\)</span>, <span class="math">\(\mathtt{x}_2\)</span>, <span class="math">\(\mathtt{x}_{99}\)</span>, and <span class="math">\(\mathtt{x}_{100}\)</span></p></li>
+<li><p>The rows, from top to bottom are <span class="math">\(\mathtt{x}_1\)</span> vs <span class="math">\(\mathtt{x}_2\)</span>, <span class="math">\(\mathtt{x}_1\)</span> vs <span class="math">\(\mathtt{x}_{99}\)</span>, <span class="math">\(\mathtt{x}_1\)</span> vs <span class="math">\(\mathtt{x}_{100}\)</span>, <span class="math">\(\mathtt{x}_2\)</span> vs <span class="math">\(\mathtt{x}_{100}\)</span>, and <span class="math">\(\mathtt{x}_{99}\)</span> vs <span class="math">\(\mathtt{x}_{100}\)</span>,</p></li>
+<li><p>The left-hand column shows datapoints with <span class="math">\(\mathtt{cid} = 8\)</span>, the right-hand column shows datapoints with <span class="math">\(\mathtt{cid} = 42\)</span>.</p></li>
+<li>This plot visualizes a number of phenomena:
+<ul>
+<li>distributions of points along some individual dimensions</li>
+<li>correlations between some pairs of dimensions</li>
+<li>check on whether these behave the same or differently for two different values for <span class="math">\(\mathtt{cid}\)</span>.</li>
+</ul></li>
+<li>At this stage, I’m trying to start forming some opinons on where in my model I can or cannot make various kinds of independence assumptions. There are three kinds of independence:
+<ul>
+<li>logical independence (logic and possibility theory)</li>
+<li>stochastic independence (probability theory)</li>
+<li>linear independence (absence of correlation in statistics)</li>
+</ul></li>
+<li><p>At this stage, I’m primarily interested in logical dependencies, as well as the logical structure behind stochastic and linear dependencies, because these are the kinds of things that dictate design choices that need to be made at an early stage.</p></li>
+<li><p>For example: the horsepower of a heavy truck as applied to a motorcycle is a logical impossibility. I’ve had cases like that in data science projects in the past, and have approached them by splitting out variables, one variable representing the horsepower of a truck, with value null if the thing isn’t a truck, the other variable representing the horsepower of a motorcycle, with value null if it’s not a motorcycle. – This yields a model that makes apples-to-apples comparisons. Otherwise the horsepower column would become to a large extent a proxy for the distinction between motorcycle and truck, which, however, needs to be treated as a separate piece of information. – If there’s a need to do this kind of feature engineering, it’s important to know about it early on.</p></li>
+<li><p>At some point, this classifier will need to be able to combine evidence from the discrete variable with evindence from the continuous variables. There are two ways of going about this:</p>
+<ul>
+<li><p>One could treat them as logically dependent, meaning that you would train one model that captures the continuous variables and that applies only to datapoints with, say <span class="math">\(\mathtt{cid} = 8\)</span>, and a completely separate model that applies only to datapoints with, say <span class="math">\(\mathtt{cid} = 42\)</span>.</p></li>
+<li><p>One could treat them as logically independent, so that you train some model on all data, ignoring the <span class="math">\(\mathtt{cid}\)</span> value, and then integrate the evidence from <span class="math">\(\mathtt{cid}\)</span> by merely shifting a decision threshold or a bias term, or something like that.</p></li>
+</ul></li>
+<li><p>Consider two examples:</p>
+<ul>
+<li><p>You have a database of wine sales, with a categorical variable <code>audience</code>, which can take on values of <code>preppie</code> and <code>wino</code>. You might find a positive correlation between price and sales among preppies, but a negative correlation among winos. In such a case you would treat price and sales as logically dependent on audience.</p></li>
+<li><p>You have a database of horses, with a categorical variable <code>color</code> and some variables <code>height</code> and <code>weight</code>. You might find that <code>color</code> does not affect the relationship between the other variables substantially, in the sense that, by just ignoring <code>color</code> and looking at all data all at once, you’re still looking at a sample that is homogeneously behaved when it comes to describing the relationship between <code>height</code> and weight. So you would treat those as logically independent.</p></li>
+</ul></li>
+</ul>
+<p>Again, this distinction is a distinction you would want to know about early on in the process. If there’s a logical dependency you want to make sure, you’re looking at statistically homogeneous subsets of the data as you go around exploring it.</p>
+<ul>
+<li><p>Based on this plot, I can’t see any examples of <span class="math">\(\mathtt{cid}\)</span> inducing logical dependencies, so I will proceed under the assumption that there aren’t any, but I make a mental note to keep verifying this, since I’m only looking at a few examples here, and it’s very possible that there are logical dependencies that I’ve simply missed.</p></li>
+<li><p>The plots show that some pairs of continuous dimensions are correlated as is the case with <span class="math">\(\mathtt{x}_1\)</span> vs <span class="math">\(\mathtt{x}_2\)</span>, whereas others aren’t. I make a mental note of that.</p></li>
+<li><p>The second and fifth row clearly exhibit a noteworthy phenomenon: These are actually binary features!</p></li>
+<li><p>If I had been really lucky here, some of those plots would have already displayed the positives and negatives in different regions of the space, implying the possibility of separation. Unfortunately, in all the examples displayed here, the positives seem firmly embedded inside the negatives, and there is no obvious way here to separate them.</p></li>
+</ul>
+</div>
+<div id="discretization-test" class="slide section level1">
+<h1>4: Discretization Test</h1>
+<ul>
+<li>So, let’s sort out these binary features then.</li>
+<li>There’s a bigger phenomenon possibly at play here, which is discretization.</li>
+<li>Thinking of our road vehicle database again: There could be a feature such as <code>number_of_doors</code>, which permits only a fairly small range of integer possibilities. This would probably induce a qualitiative rather than a quantitative distinction, so one would have to think about whether to treat each discretized variable as a discrete symbol or as a numeric value, etc.</li>
+<li>So I wrote a script, which, for each of the <span class="math">\(\mathtt{x}\)</span>’s records its unique values, stopping the recording after having seen 500 different values. It then outputs the number of unique values seen for each dimension, including, for dimensions with fewer than 5 values, the actual values themselves.</li>
+<li>It turns out that there is a set of 30 binary features.</li>
+<li>Among the remaining 70, they all have more than 500 distinct values, so none of them exhibit any signs of quantizatin or discretization, and can therefore be treated as continuous and numeric in nature.</li>
+</ul>
+</div>
+<div id="logical-dependencies-among-binary-features" class="slide section level1">
+<h1>5: Logical Dependencies Among Binary Features</h1>
+<ul>
+<li>Having made this discovery that there are 30 binary features in the data, the next thing to do is to look for logical dependencies among them.</li>
+<li>If they were logically independent, there would be <span class="math">\(2^{30} \approx 1\mathrm{G}\)</span> different combinations. Obviously they can’t all be exhibited in a dataset of only <span class="math">\(\approx 850\mathrm{k}\)</span> datapoints, but you would still expect a whole lot of combinations to show up.</li>
+<li>If there were logical dependencies among them, then that number could be a lot smaller.</li>
+<li>So, I wrote a script to count the number of unique combinations of values for binary features, and it turns out that there are only 367.</li>
+<li>This means that the binary features are strongly constrained by a rich set of logical dependencies that exist among them. So I make a mental note of that.</li>
+<li>I also tried this in combination with <span class="math">\(\mathtt{cid}\)</span>. With 367 values for the binary features, and 50 values for <span class="math">\(\mathtt{cid}\)</span>, you’d expect <span class="math">\(50 * 367 = 18350\)</span> combinations, and the script has actually seen <span class="math">\(18349\)</span> of those, so <span class="math">\(\mathtt{cid}\)</span> does not seem to participate in the system of pairwise mutual dependencies that exist among the binary features, but rather seems logically independent.</li>
+<li>It’s perfectly possible that, among those 367 combinations of values for the binary features, there’s further internal structure. For example if there were a binary feature that was nearly independent of the others, it might well be that the 367 combinations break apart into a set of 183 combinations for the other features, plus the value zero for the independent one, plus a set of 184 combinations for the other features, plus the value one for the independent one. But for now, I don’t yet need to know all of that in detail.</li>
+<li>As before in step 2, I looked at the total number of datapoints obtained for each combination, as well as the ratio of positives, and am finding that the numbers vary wildly. This implies that the binary features do have positive information content with regard to the dependent variable <span class="math">\(\mathrm{y}\)</span>.</li>
+<li>But, again, the ratio of positives, even for these fine-grained combinations of binary feature values never crosses the 50%-line, except for very very small cells. So there isn’t yet an obvious way to construct a classifier here.</li>
+<li>The script operates by representing each combination of binary features in a single integer, using some bit-arithmetic. I use hex numbers to then display that integer.</li>
+<li>Interestingly, it is the combination of binary features equalling <code>0x3fffffff</code>, i.e. the combination for which every binary feature has value one, which has the largest total number of datapoints in it (that number being 72215).</li>
+<li>One can further combine that with the category, to obtain the combination with category <span class="math">\(14\)</span> (denoted <code>0xe.0x3fffffff</code>) as the most frequent one.</li>
+<li>The combination <code>0x3fffffff</code> also exhibits a fairly high proportion of positive datapoints, at 10%. Only one other combination has an even higher density of positives. That is <code>0x3dfe7f5f</code>, which as 12%.</li>
+<li>It might well be that every one of the binary features, more or less, has the effect of accumulating additional evidence in support of a positive decision. I’ll make a mental note of that. The Bayesian method should be able to assign weights appropriately.</li>
+<li>In combination with category values, the proportion of positives can go even higher: <code>0xe.0x3fffffff</code> has as many as 16% (total number of data points 2436).</li>
+<li>Combination <code>0x18.0x1fd57fcf</code> has as many as 50% positives, but is only thinly populated (10 data points).</li>
+<li>So, I should look at those in more detail.</li>
+</ul>
+</div>
+<div id="another-plot-seems-called-for" class="slide section level1">
+<h1>6: Another Plot Seems Called for</h1>
+<div class="figure">
+<img src="step06.png" />
+</div>
+<ul>
+<li>So, I re-did the plot from step 3, this time removing the binary features, and looking at combination <code>0xe.0x3fffffff</code> on the left-hand side, and <code>0x18.0x1fd57fcf</code> on the right hand side, rather than the arbitrarily chosen categories 8 and 42.</li>
+<li>The larger density of positives, in relation to the entirety of the dataset is clearly visible here, but other than that, no real patterns seem to emerge.</li>
+<li>Regarding combination <code>0x18.0x1fd57fcf</code>, it seems likely that the unusually large proportion of positives is a selection-bias artefact resulting from the fact that it’s so thinly populated, so I’ll file this under dead end.</li>
+<li>Once again, there isn’t an obvious way here, to separate the positives from the negatives.</li>
+</ul>
+</div>
+<div id="construct-some-subsamples" class="slide section level1">
+<h1>7: Construct Some Subsamples</h1>
+<ul>
+<li>Having looked into the categorical and binary features a little, it’s now time to turn attention to the continuous variables.</li>
+<li>I started by slicing the data in various ways to obtain some meaningfully constructed samples that would allow some conclusions to be drawn that are universally true about the structure of the space induced by the continuous variables, even given that I’m not entirely sure if those variables are logically dependent on the category and/or the combination of binary features.</li>
+<li>So I constructed four subsamples:</li>
+<li>A sample across everything, capping at 10000 data points (<code>all_data</code>).</li>
+<li>The category <code>0xe</code>, across all combinations of binary features, capping at 10000 data points (<code>catplane</code>).</li>
+<li>The binary combination <code>0x3fffffff</code>, across all categories, capping at 10000 data points (<code>binplane</code>).</li>
+<li>The combination <code>0xe.0x3fffffff</code> (<code>data</code>). There are only 2436 data points there in total, so no capping is needed.</li>
+<li>In what follows, I will study the continuous variables in detail.</li>
+<li>In each step, I’ll start by looking at <code>data</code>.</li>
+<li>If that leads me to any particular conclusion, I will double-check that conclusion against the other subsamples. If the conclusion is still justified in the other subsamples, it’ll be safe to assume that it’s universally valid.</li>
+<li>If every conclusion is either universally valid or never valid, but never valid in one subsample and not in another, I’ll proceed on the assumption that the continuous dimensions are logically independent from the discrete ones.</li>
+</ul>
+</div>
+<div id="try-some-2d-projections" class="slide section level1">
+<h1>8: Try Some 2d-Projections</h1>
+<ul>
+<li>As far as the classification problem is concerned, the key will be to find some kind of an n-dimensional projection of this 70-dimensional space that allows for a good separation.</li>
+<li>To that end, I started with what you might call a brute-force search for such a projection.</li>
+<li>With 70 individual dimensions, there are 2415 pairs of dimensions.</li>
+<li>For each pair, I look through each data point.</li>
+<li>I discretize the continuous values into one of 7 range-buckets, each of which is constructed so as to hold an equal number of points (i.e. septiles).</li>
+<li>So given a pair of dimensions and a data point, the data point can fall into one of 49 cells (one of 7 septiles in on dimension, and another one of 7 septiles in the other dimension).</li>
+<li>For each pair of dimensions, I record the maximum proportion of positive datapoints observed in any one cell.</li>
+<li>While I was at it, I also recorded the shift in median among positive versus negative data points, along each dimension.</li>
+<li>For subsample <code>data</code>, the largest proportion was observed for the combination of dimensions 10 and 63, where there was a cell with 65% positive datapoints. But that contained only 0.7% of the data points, so it might just be a coincidence that the cell happened to be at a thinly populated edge.</li>
+<li>In total, there were only 42 (out of 2415) combinations of features that had a cell with more than 50% positive datapoints.</li>
+<li>For subsamples <code>binplane</code>, <code>catplane</code>, and <code>all</code> there were no pairs of dimensions yielding any cells with more than 50% positive datapoints at all.</li>
+<li>Shifts in medians seemd low across the board, so there’s nothing much interesting there either.</li>
+</ul>
+</div>
+<div id="look-at-that-in-a-plot" class="slide section level1">
+<h1>9: Look At That In A Plot</h1>
+<div class="figure">
+<img src="step09.png" />
+</div>
+<ul>
+<li>Just to be thorough, I decided to plot dimension 10 vs 63 for subsample <code>data</code> (which was the combination that looked remotely like the most interesting).</li>
+<li>So, nothing there.</li>
+</ul>
+</div>
+<div id="try-some-sums" class="slide section level1">
+<h1>10: Try Some Sums</h1>
+<div class="figure">
+<img src="step10.png" />
+</div>
+<ul>
+<li>Next, I thought I’d look at whether there is more information in the sum of the continuous dimensions than there is in the individual dimensions.</li>
+<li>An example of such a scenario would be, when each of the individual 70 dimensions is the return on a different stock, and the dependent variable is dependent on the move of the stock market as a whole, but not on the move of any individual stock.</li>
+<li>In this case, each stock would be correlated with the market move, so its return would be the market return, plus a noise term.</li>
+<li>By averaging across the values, the noise terms cancels out, and the average ends up capturing the market move.</li>
+<li>I distinguished between dimensions, based on the sign of the shift in class median between the red vs blue points. I summed up the dimensions where that sign was positive to obtain an x-value, and the dimensions where that sign was negative to obtain a y-value. In addition, I weighted the values by the magnitude of the median-shift, so as to amplify the effect from those dimensions which have good separations.</li>
+<li>The result can be seen above. The four plots are the ones obtained for the four subsamples. In all four cases, it can be seen that no separation emerges. So, that’s another dead end.</li>
+</ul>
+</div>
+<div id="test-for-centre-embedding" class="slide section level1">
+<h1>11: Test For Centre Embedding</h1>
+<ul>
+<li>In step 8, I already did a brute force search for a pair of two dimensions, whose values yield a good separation in some region of the resulting two dimensional space.</li>
+<li>But just because, there isn’t a set of two such dimensions, it doesn’t mean that there couldn’t be a higher-dimensional projection that creates good separation.</li>
+<li>For example: Imagine a donut and a cherry which is in the hole in the middle of the donut. The donut and the cherry are two different classes of data points.</li>
+<li>Looking at it in a 2d-projection from the top, it’s easy to separate them (for example, using polar coordinates).</li>
+<li>Looking at it in any 1d-projection, it becomes impossible to separate them.</li>
+<li>That phenomenon could exist in a higher-dimensional variety. For example, given a cocktail cherry inside a coconut, any 2d-projection is now bound to fail, but you can still separate them in the 3d-representation.</li>
+<li>The problem is, we can’t really reiterate the study from step 8 in higher-dimensional spaces, since it would very quickly become computationally very expensive.</li>
+<li>But we’re lucky, we might be looking at a situation where there is a high-dimensional projection that achieves the separation, subject to the additional constraint that the cell of interest is always the one in the centre. – This is somewhat suggested by the fact that every 2d-projection I’ve looked at so far seems to have the positives embedded in the centre of the negatives, so that might be universally true.</li>
+<li>So I wrote another script, based on the one from step 8, looking not only at pairs, but also at sets of three and four dimensions, which computes the proportion of positives among those points which fall in the central septile in every one of those dimensions.</li>
+<li>The following observations relate to subsample <code>data</code>.</li>
+<li>The best single dimension achieves proportion at most 22%.</li>
+<li>The best pair of dimensions achieves 36%.</li>
+<li>The best set of three dimensions achieves 60%, but that cell only contains 10 data points.</li>
+<li>The best set of four dimensions achieves 50%.</li>
+<li>The fact that the differences reverse direction after three dimensions suggests that there’s little point to continuing to look for central embedding in higher-dimensional spaces.</li>
+<li>Reiterating the experiment with <code>all_data</code>, capping at 2500 datapoints, the progression is 8%, 17%, 50%, 33%.</li>
+<li>So, that’s one more dead end.</li>
+</ul>
+</div>
+<div id="start-thinking-outside-the-box" class="slide section level1">
+<h1>12: Start Thinking Outside The Box</h1>
+<div class="figure">
+<img src="step12.png" />
+</div>
+<ul>
+<li>In my desperation, I started taking some long shots, at this point.</li>
+<li>What if the value of <span class="math">\(\mathtt{cid}\)</span> indicates one dimension as being “relevant”, whereas the others are just noise?</li>
+<li>The histogram of relevant values are in the plot above.</li>
+<li>On the left hand side, the assumption is that the index is across all <span class="math">\(\mathtt{x}\)</span>’s, on the right hand side, just across the continuous ones.</li>
+<li>The spike in the middle, on the left hand side is due to the fact that zeroes and ones are a lot more frequent, due to the binary features playing into this.<br /></li>
+<li>No separation. Another day older and deeper in debt.</li>
+<li>But the idea was not as far fetched, as it may have sounded. This kind of data could come about when the dimensions record, for example, signals from different sensors, but they are not meaningful at all times. For example, if they are cameras, and only one of them has the lens-cap off at any one time, and <span class="math">\(\mathtt{cid}\)</span> records which one, then this would be that type of scenario.</li>
+</ul>
+</div>
+<div id="explore-this-further" class="slide section level1">
+<h1>13: Explore This Further</h1>
+<div class="figure">
+<img src="step13.png" />
+</div>
+<ul>
+<li>I hallucinated some patterns there, that I will not even go into.</li>
+<li>In order to make completely sure, I compared the histogram that results from picking the dimension picked out by <span class="math">\(\mathtt{cid}\)</span> (left) against a randomly chosen dimension (right).</li>
+<li>I did this without any filtering (top), and filtering out the zeroes and ones (bottom).</li>
+<li>So that’s what this is.</li>
+<li>Nothing here.</li>
+</ul>
+</div>
+<div id="clustering-dimensions-according-to-covariance" class="slide section level1">
+<h1>14: Clustering Dimensions According To Covariance</h1>
+<ul>
+<li>Next, I looked at the covariance matrix in some more detail. It turns out that some pairs of dimensions have rather a lot of covariance, some with a positive, some with a negative sign, and some have very little covariance.</li>
+<li>So, I thought I’d try to reiterate the idea from step 10 of doing sums, but I would do those sums only within clusters of highly correlated features.</li>
+<li>Going back to our stock market example: There might be industrial stocks, mining stocks, tech stocks, banking stocks, etc. Each of those market sectors would be a set of stocks that are mutually correlated, but less correlated with stocks in other sectors. So the individual stock return can be thought of as the sector return, plus a noise term (i.e. idiosyncratic risk).</li>
+<li>So what I did was to compute the covariance matrix using <a href="http://www.numpy.org/">numpy</a>, take an absolute of that, so as to discard the sign on each covariance, then use that as the affinity matrix for the agglomerative clustering procedure from <a href="http://scikit-learn.org/">scikit-learn</a>.</li>
+<li>I set the clustering procedure to look for 20 clusters, then discarded clusters that had only one or two dimensions. (Although, in theory, it’s perfectly possible that a cluster with only one dimension might be one that’s most useful to making the distinction).</li>
+<li>The clusters for subsample <code>data</code> were as follows:
+<ul>
+<li>-61, -11, 6, 8, 28</li>
+<li>-55, -27, 15, 21</li>
+<li>-59, -35, 3, 14, 16, 32, 38</li>
+<li>-67, -30, -26, 23, 39, 62</li>
+<li>-57, 4, 48</li>
+<li>-64, -51, -44, 17</li>
+<li>-54, -52, -33, 13, 29, 37, 69</li>
+<li>-68, -53, -36, 5, 66</li>
+<li>-49, -45, -43, -40, -34, -25, -20, -10, 9, 22, 56</li>
+<li>-65, -58, 7</li>
+<li>1, 2, 31</li>
+</ul></li>
+<li>Each of those lists is a cluster (think market sector), containing dimensions (think stocks in the sector).</li>
+<li>There was some variation in this result, as applied to the different subsamples (which is bad), but major portions of this clustering actually remained unaltered (which is good). In order to be able to proceed with only a single clustering, I decided to concatenate the four subsamples to get to a single clustering that I hoped would have some universality.</li>
+<li>The indexing on the dimensions starts with one, rather than zero.</li>
+<li>I apply a negative sign to all dimensions that have negative correlation with the first dimension in the cluster.</li>
+<li>This implies a frontend feature engineering step, whereby I turn the 70 individual dimensions into only 10 dimensions, each corresponding to a cluster. The value along each of the 10 dimensions is the average computed across those among the original 70 dimensions which are members of the cluster. For the dimensions with a negative sign, I flip the sign on the input value before adding it to the average.</li>
+<li>The idea behind the sign flipping is something along these lines: If the first cluster is stock options on tech stocks, and dimension 6 is an IBM call (where the price goes up when IBM stock goes up), and dimension 11 is a Microsoft put (where the price goes down when the Microsoft stock goes up), then they will be correlated negatively. By adding them together, you are actually cancelling out the interesting part of the risk, rather than reinforcing it. So this is where the sign flipping comes in.</li>
+</ul>
+</div>
+<div id="looking-at-that-in-a-plot" class="slide section level1">
+<h1>15: Looking At That In A Plot</h1>
+<div class="figure">
+<img src="step15b.png" />
+</div>
+<ul>
+<li>After generating the <a href="step15a.png" target="_blank">original plot</a> based on the clustering from the previous step, it turned out that there were still pairs of clusters that showed fairly high correlations.</li>
+<li>So I manually kept merging the clusters, until no obvious correlations were left, which left me with only three clusters:
+<ul>
+<li>-55, -27, 15, 21,</li>
+<li>-61, -11, 6, 8, 28, -1, -2, -31, 57, -4, -48, 64, 51, 44, -17, 65, 58, -7</li>
+<li>-59, -35, 3, 14, 16, 32, 38, 54, 52, 33, -13, -29, -37, -69, -68, -53, -36, 5, 66, 49, 45, 43, 40, 34, 25, 20, 10, -9, -22, -56, 67, 30, 26, -23, -39, -62</li>
+</ul></li>
+<li>The plot relating to the resulting clustering is what’s shown above.</li>
+<li>No separation emerges.</li>
+</ul>
+</div>
+<div id="looking-at-that-in-one-more-plot" class="slide section level1">
+<h1>16: Looking At That In One More Plot</h1>
+<div class="figure">
+<img src="step16_1_0.png" />
+</div>
+<div class="figure">
+<img src="step16_2_0.png" />
+</div>
+<div class="figure">
+<img src="step16_2_1.png" />
+</div>
+<ul>
+<li>I kind of like these little histograms on the chart axes to better visualize the relative densities in different regions of the space, when there’s a lot of overlap, like there is in this plot.</li>
+<li>But in this case, no interesting patterns emerge.</li>
+<li>Throughout steps 8–16, I would have really liked to find out about some feature engineering, that would allow me to see some proper separation between the positive and the negative class.</li>
+<li>But, having now directed a serious amount of work toward this effort, to no avail, I have decided that there may just not be any proper separation; that all there is to capture here is localized variations in the relative densities of positives vs negatives, with the proportion of positives never crossing the 50% boundary at all.</li>
+<li>So this rules out pretty much all of the machine learning methods that rely on discriminant functions, linear or otherwise.</li>
+<li>Rather, the method of choice here would have to be something with rather a “brute force” feel to it, such as nearest neighbor methods, although even a nearest neighbor approach would presumably need some tweaking, for example to the majority voting threshold, so that the positive class doesn’t simply get overwhelmed by the negative class.</li>
+</ul>
+</div>
+<div id="exploring-the-neighborhood" class="slide section level1">
+<h1>17: Exploring The Neighborhood</h1>
+<ul>
+<li>So: Localized variations in the relative densities of positives vs negatives is what I’m looking for.</li>
+<li>In order to get a better feel for that, I decided to explore the space immediately surrounding each positive datapoint.</li>
+<li>So I implemented a script to systematically try through a handful of distance thresholds and precision thresholds.</li>
+<li>Given a pair of thresholds, it would go through all positive datapoints, collect the set of all points no further away than the set distance. If the proportion of positives among those points is larger than the precision threshold, then they would all be classified as positives (even though the negatives might still outnumber the positives).</li>
+<li>By taking the union over all sets of points thus classified as positives, an f-measure can be obtained for each pair of distance threshold and precision threshold.</li>
+<li>Applying this to the <code>data</code> subsample, an f-measure of 40.5% is obtained, using distance threshold 5.81 and precision threshold 23%.</li>
+<li>On the <code>all_data</code> subsample, capping at 2500 samples, that optimum f-measure comes in at 16.8% for precision threshold at 3%. This is explained, at least to some extent, by the lower proportion of positives among the <code>all_data</code> subsample vs the <code>data</code> subsample. The distance threshold is at a nearby location, at 4.98.</li>
+<li>The above numbers were obtained using only those dimensions that weren’t discarded as irrelevant by the feature engineering study from step 14. Using all of the 70 dimensions instead (and moving back to subsample <code>data</code>, rather than <code>all_data</code>), the optimal f-measure comes in at 39%, so it does seem like there is some noise in some of those extraneous dimensions discarded by the feature engineering.</li>
+<li>During development, I also used a set of three randomly chosen dimensions (0, 21, 42) for testing purposes. Oddly enough, it turned out that, at 40% f-measure, it does almost as well as the run using all of the dimensions (as chosen by the feature engineering from step 14).</li>
+<li>Using the Mahalanobis distance, instead of the regular Euclidean distance on this set of three dimensions, we can get as high as 41% f-measure.</li>
+<li>The fact that this 41% result is the best we’ve managed to obtain in this experiment, and that it relies on three randomly chosen dimensions suggests, that there is scope for further work on feature engineering and dimensionality reduction.</li>
+</ul>
+</div>
+<div id="exploring-the-neighborhood-some-more" class="slide section level1">
+<h1>18: Exploring The Neighborhood Some More</h1>
+<ul>
+<li>So, the obvious next step is to apply the feature engineering from step 14 properly, i.e. actually doing the averages across the clusters, rather than just using them to select the dimensions to keep vs the dimensions to discard.</li>
+<li>In a first step, I used the original output from step 14, thus reducing the dimensionality from 70 down to 10, and repeated the experiment from step 17 with that piece of feature engineering in place. That gets us to 42.17% f-measure.</li>
+<li>Then I retried with the clustering that came out of the manual fiddling in step 15, so reducing from 70 down to 3 dimensions. Despite the heavy reduction in dimensionality, this still yields 41.5% f-measure, reinforcing the sense I’ve gained from the analyses in steps 11 and 17 that the dimensionality of this classifier need not exceed three.</li>
+<li>To be thorough, I would need to re-check that this conclusion still holds for the other subsamples, but in this case, I chose to skip that.</li>
+<li>Then I tried switching to Mahalanobis: This yielded 41.1% f-measure. Since the feature engineering already produces a feature space that is very close to uncorrelated, there is little gain to be made through the use of an additional decorrelation technique such as Mahalanobis.<br /></li>
+<li>But I chose to think about it differently: This shows that, even though Mahalanobis doesn’t help it also doesn’t do any significant amount of damage, so for the sake of convenience, I decided to leave it in throughout the rest of this project, just so that correlation is one fewer thing to worry about.</li>
+</ul>
+</div>
+<div id="exploring-the-neighborhood-even-more" class="slide section level1">
+<h1>19: Exploring The Neighborhood Even More</h1>
+<ul>
+<li>So, all of this amounts to a workable approach to doing the feature engineering for this classifier, but it’s still prudent to compare whatever I came up with, with whatever the good folks at <a href="http://scikit-learn.org/">scikit-learn</a> came up with in terms of general purpose feature engineering methods.</li>
+<li>After trying through the out-of-the-box method for <a href="http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html">PCA</a>, as well as <a href="http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.KernelPCA.html">Kernel PCA</a> with various different kernels, it turned out that the cosine kernel performed pretty well, at 42.50% f-measure.</li>
+</ul>
+</div>
+<div id="look-at-this-in-a-plot" class="slide section level1">
+<h1>20: Look At This In A Plot</h1>
+<p><img src="step20a.png" /> <img src="step20b.png" /></p>
+<ul>
+<li>So, I thought I should really look at this in a plot, before taking it any further. This is what it looks like for subsamples <code>data</code> (top) and <code>all_data</code> (bottom).</li>
+</ul>
+</div>
+<div id="conclusion" class="slide section level1">
+<h1>Conclusion</h1>
+<ul>
+<li>So this process of exploration exposed me to a semi-structured set of experiences with this dataset that informed the design of a submission-ready solution.</li>
+<li>You may now delete the code under <code>so1rb_exploration</code> and continue your reading with document <code>SOLUTION</code> to find out about how I put everything together.</li>
+</ul>
+</div>
+</body>
+</html>

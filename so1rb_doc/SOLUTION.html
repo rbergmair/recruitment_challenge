@@ -1,0 +1,364 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Dr Richard Bergmair" />
+  <title>RB’s Approach To SO1’s Algorithm Challenge using Ideas from Bayesian and k-Nearest-Neighbor Classification</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+</head>
+<body>
+<div id="header">
+<h1 class="title">RB’s Approach To SO1’s Algorithm Challenge using Ideas from Bayesian and k-Nearest-Neighbor Classification</h1>
+<h2 class="author">Dr Richard Bergmair</h2>
+<h3 class="date">Oct-10 2015</h3>
+</div>
+<h1 id="preface">Preface</h1>
+<h2 id="notes-on-style">Notes on Style</h2>
+<p>So, this is my report on my approach to the algorithm challenge. From my work with one of my previous clients, I’m quite used to doing a lot of communication in written form and over the internet. In particular, we were using a ticketing system with a markup language in order to document progress on the various tasks and projects we were working on, as well as solicit comments and facilitate discussion. I’ve decided to write this document in a similar sort of style, writing it essentially the way I would write an e-mail to a person who is well-known to me, who is an expert on the subject matter under discussiona and who I would assume to give a generally sympathetic reading to the document.</p>
+<p>If you’re trying to form an opinion on whether I can rise to the standard of rigor common among scientists for published work, have a look at my web page at <a href="http://richard.bergmair.eu/">richard.bergmair.eu</a> for a proper publication list.</p>
+<h2 id="the-revolution-will-not-be-peer-reviewed">The Revolution Will Not Be Peer-Reviewed</h2>
+<p>I should stress that one of the features of this more informal style is the general absence of citations and references of the kind that academics are used to. Wherever I actually use any outside resources or any outside documentation, or whenever I have any pointers that I think might be helpful or interesting to the reader, I do link to them.</p>
+<p>But if, throughout this document, a reader forms the opinion that I am expressing an idea that really, really, has a canonical reference that should always go with it, and I don’t put it in, then it’s not for sheer ignorance, but rather, it is a conscious decision on my part not to play that game.</p>
+<p>For example, when I was finished with this software, and started writing the report, I pondered slapping a label on it, such as “Bayesian k Nearest Neighbors”. Putting that into Google, it turns out that someone has already used the term as the title of <a href="http://www.people.fas.harvard.edu/~junliu/Workshops/workshop2007/talkSlides/ChristianRobert_knn.pdf">some slideshow</a>. As an academic, the onus would now be on me, to try to figure out what they did, how that relates to what I did, and then pretend like I was aware of their work and applied it (even when there was independent discovery), or pretend like I was aware of their work and saw a problem with it, justifying why I didn’t apply it, but when the solution to the problem is already on the table, then IMHO it’s not, in general, a good use of time to put a lot of work into sorting out who invented the various ideas that ended up playing a role in that solution. A certain level of reflectiveness is however useful. For example, when I find myself using an idea a lot, I sometimes get sufficiently curious to decide I want to make an effort to find out what it’s called, who invented it, and what other people have said about it, etc. But what I’m trying to say is that this is not a matter of principle, but rather that there needs to be a conscious decision about whether or not that’s a good use of time in any particular case, especially in light of the fact that fly-fishing is a good use of time, too.</p>
+<h2 id="more-pseudo-philosophical-waffle">More Pseudo-Philosophical Waffle</h2>
+<p>Wearing my partitioner’s hat, what I do is to apply the inventory of ideas and techniques that my academic alter ego has picked up through the years to try to understand the logic and the structure of the problem I’m trying to solve. That understanding more or less dictates a solution which is the simplest solution to the problem. If that solution is novel, then great. If that solution is on page one of every textbook on the subject, then so be it. – If you’re a software developer, and you’re confronted with a problem that calls for a solution that is novel, and you can’t see it, because you lack the conceptual inventory, then that’s weak. If you’re a dysfunctional academic peddling a solution looking for a problem, and as a result, you end up hallucinating complexity where none exists, then that’s just as weak. (See <a href="https://www.youtube.com/watch?v=9RKlJ2oBROA&amp;NR=1">Gsellmann’s Weltmaschine</a>). Okay, so that’s that.</p>
+<h2 id="solution-vs.exploration">Solution vs. Exploration</h2>
+<p>In this document, I will outline the solution to the SO1 algorithm challenge that I came up with. The purpose of the present document (<code>SOLUTION</code>) is to tell you where that solution is located, and give you directions on how to get there most efficiently, starting from a working knowledge of data science. – There is a separte document (<code>EXPLORATION</code>) that deals with how I came to discover that route by taking lots and lots of roads that ended up being dead ends, applying lots and lots of analogies to problems I’ve dealt with in the past that sometimes did, but often didn’t apply here. – A lot of readers won’t be interested in reading about dead ends and about similar problems that ended up not being helpful in solving this one. So it makes sense to put that in a separate document.</p>
+<p>Incidentally, the same structure exists in the code. There are two separate Python projects (<code>so1rb</code> and <code>so1rb_explore</code>). The project <code>so1rb_explore</code> is like “brainstorming” or like a “stream of consciousness” stage in drafting some piece of creative writing. It is a sequence of self-contained scripts, each of which answers a simple question about the data. They do not share any common structure, but rather they come about through a process of copying and pasting, which would not normally be proper software engineering. But the overarching idea here is that you’re trying to concentrate on the structure and the phenomena that are in the data, not on the structure of the code, so you allow yourself to forget about proper software engineering for the purpose of this exploration, so as not to be distracted.</p>
+<p>Then you start with a clean slate, and create a well-structured and reusable piece of software that takes into account all and only those phenomena actually exhibited by the data, with the structure of the code informed by your knowledge of the structure of the data. And that’s what <code>so1rb</code> is. – If you skip straight to writing the code you’re intending to be the ultimate solution to the problem, then your starting point will essentially be a shot in the dark. As you try to improve upon a suboptimal situation, you’ll find yourself trying to add illumination by putting in lots of parameters, switches, and debug-level code. But at that stage, a lot of very basic design choices will already have been made in a suboptimal way, and once you’ve set all of your parameters and switches and deactivated all your debug code, you’ll end up with lots of orphaned code and unnecessary complexity that makes it hard for people to read and understand and hence to reuse that code in the future.</p>
+<h1 id="structure-of-the-data-feature-engineering">Structure of the Data &amp; Feature Engineering</h1>
+<p>Let’s finally delve into the problem at hand, and start talking about the data. It’s a CSV file, with the following columns</p>
+<ul>
+<li><span class="math">\(\mathrm{id}\)</span> (which is also called <span class="math">\(\mathtt{id}\)</span> in the data) is, well, the identifier. (You guessed that, didn’t you?)</li>
+<li><span class="math">\(\mathrm{y}\)</span> is the dependent variable, i.e. the class label we are trying to predict as part of the classification problem at hand.</li>
+<li><span class="math">\(\mathrm{C}\)</span> (which is called <span class="math">\(\mathtt{cid}\)</span> in the data) is a number in the range <span class="math">\([1,30]\)</span> and seems to represent a discrete symbol. I’m assuming it stands for “categorical id” or so.</li>
+<li>Among the columns called <span class="math">\(\mathtt{x}_1 \ldots \mathtt{x}_{100}\)</span> in the data, there are 70 continuous-valued numeric columns, and 30 columns with values <code>0</code> or <code>1</code>. In what follows, I’ll reindex these, so that <span class="math">\(\mathrm{x}_i\)</span> is the <span class="math">\(i\)</span>-th of the continuous-valued features, and <span class="math">\(\mathrm{b}_j\)</span> is the <span class="math">\(j\)</span>-th of the binary features (starting the indexing at one, in both cases).</li>
+</ul>
+<p>The module <code>so1rb/so1rb_data/da_read.py</code> implements a reader that reads this data format.</p>
+<p>Throughout the rest of this section, I will describe the modules under <code>so1rb_frontend</code>. These are classes derived from <code>Frontend</code>, and they all serve the purpose of preprocessing the data so as to present it to the core classification algorithm in a suitable representation.</p>
+<p>There are two stages to this:</p>
+<ul>
+<li>Decorrelation (= orthogonalization): So as to transform the data into a space in which features are as close as possible to pairwise mutually independent, which may or may not have the side effect of dimensionality reduction.</li>
+<li>Feature selection: So as to identify and remove any components in the decorrelated (orthogonalized) space, that are unrelated to the dependent variable <span class="math">\(\mathrm{y}\)</span>.</li>
+</ul>
+<p>I will start by describing the components that play a role here, and then describe how to put them all together into a well-structured feature engineering framework.</p>
+<h2 id="binaryfrontend"><code>BinaryFrontend</code></h2>
+<p>The set of <span class="math">\(30\)</span> binary features <span class="math">\(\mathrm{b}_1, \mathrm{b}_2, \ldots, \mathrm{b}_{30}\)</span> yields <span class="math">\(2^{30} \approx 1\mathrm{G}\)</span> combinations of values. During the exploration stage of this project, however, it turned out that, within a training sample of <span class="math">\(\approx 850\mathrm{k}\)</span> data points, only <span class="math">\(367\)</span> combinations actually appeared in data, which lead me to conclude that there is a rich set of logical dependencies constraining the possibilities. – So there seems to be plenty of scope here to achieve decorrelation and dimensionality reduction through some kind of feature engineering.</p>
+<p>To better understand the phenomenon at play, consider the following example: In a table of horses, there might be a column <span class="math">\(\mathrm{Gender}\)</span>, taking on values <span class="math">\(\mathrm{Stallion}\)</span> or <span class="math">\(\mathrm{Mare}\)</span>, and a column <span class="math">\(\mathrm{RegisteredStud}\)</span>, taking on values <span class="math">\(\mathrm{Yes}\)</span> or <span class="math">\(\mathrm{No}\)</span>. Obviously, only a stallion can be a registered stud.</p>
+<p>The type of feature engineering I’m suggesting here would combine this into one column <span class="math">\(\mathrm{StudbookStatus}\)</span> taking on values <span class="math">\(\mathrm{RegisteredStud}\)</span>, <span class="math">\(\mathrm{UnregisteredStallion}\)</span> or <span class="math">\(\mathrm{Mare}\)</span>. This would achieve decorrelation, meaning that the resulting representation is better behaved with regard to the independence assumptions that go into, for example, a Bayesian approach to the classification problem. It also achieves dimensionality reduction.</p>
+<p>There is a drawback here: We’re losing out on potentially useful generalizations over data. For example, the set of male horses is a statistically and semantically coherent group, which we no longer capture, since we’re now cutting through that group by forcing the distinction between registered studs and unregistered stallions.</p>
+<p>In a scenario where there is very little data, this could lead to problems if statistical cells become too small to allow for generalizations to become significant. But in the particular problem at hand, it does seem to me like we have plenty of data relative to the data complexity of the classification problem we’re trying to solve, and that therefore we need not worry about this. So we would still have enough examples of registered studs and unregistered stallions so that generalizations pertaining to male horses in general will be able to take shape in a statistically significant manner within each subgroup, even without the benefit of taking into account data about male horses from the other subgroup. But it remains true that this lumping-together comes at a cost, so we wouldn’t want to do it unnecessarily.</p>
+<p>Applying this idea back to our <span class="math">\(30\)</span> binary features, that means that we wouldn’t necessarily want to turn the binary features into just a single categorical variable taking on 367 values, and disregard all internal structure. For example, it might well be that one of the binary features is largely independent, with the 367 combinations breaking apart into a set of 183 combinations for the mutually dependent features, plus the value zero for the independent one, and a set of 184 combinations for the dependent features, plus the value one for the independent one. It would, in such a case, be much preferable to allow the independent feature to remain a distinct feature in its own right.</p>
+<p>So what I did was to create a clustering method to try to cluster the binary features accordingly. In particular: The goal was to partition the set of binary features into clusters, so that features in the same clusters would be highly correlated with each other, but uncorrelated to features in other clusters.</p>
+<p>I used the information theoretic measure of <a href="https://en.wikipedia.org/wiki/Total_correlation">correlation</a> which is highly related to <a href="https://en.wikipedia.org/wiki/Mutual_information">mutual information</a> and <a href="https://en.wikipedia.org/wiki/Entropy_(information_theory)">entropy</a> in order to quantify how correlated a binary feature was with another feature or with a set of other features.</p>
+<p>In particular, the method works as follows:</p>
+<ul>
+<li>Start with a set of binary features (initially the set of all features). Imagine them sitting in front of you in the middle of your desk.</li>
+<li>Among those features, identify that feature whose probability distribution yields the lowest correlation relative to the joint distribution of the remaining features. So that is the feature which is the best candidate for “independent feature”. Remove that from the pile and put it on the left-hand side of your desk.</li>
+<li>Among the remaining features, identify the one whose probability distribution yields the lowest correlation with that feature on the left-hand side of your desk, and put it on the right-hand side of your desk.</li>
+<li>Look through the remaining features, one at a time. For each feature do the following: Look at the correlation of that feature’s probability distribution with the joint probability distribution of the features to your left. And then also look at the correlation with the features to your right. If it’s more correlated with the ones on your left, add it to the pile of features on the left, otherwise the pile of features to the right. If none of the two correlations exceed 50%, you add it to neither pile.</li>
+<li>After you’re done with this, the set of features to your left and right will each be a cluster. So you put each of them in its own drawer.</li>
+<li>Then you repeat the process with the features that remained in the middle of your desk which you didn’t add to any pile because they weren’t correlated enough.</li>
+<li>You keep repeating this, until there are no more features left on your desk.</li>
+<li>When you’re done with this, each of your drawers will have a nice cluster of binary features sitting inside it.</li>
+</ul>
+<p>In particular, the clusters that came out of the process were:</p>
+<ul>
+<li><span class="math">\(\mathrm{B}_1 = \langle \mathrm{b}_2 \rangle\)</span></li>
+<li><span class="math">\(\mathrm{B}_2 = \langle \mathrm{b}_{10}, \mathrm{b}_{25} \rangle\)</span></li>
+<li><span class="math">\(\mathrm{B}_3 = \langle \mathrm{b}_{1} \rangle\)</span></li>
+<li><span class="math">\(\mathrm{B}_4 = \langle \mathrm{b}_{15} \rangle\)</span></li>
+<li><span class="math">\(\mathrm{B}_5 = \langle \mathrm{b}_{27} \rangle\)</span></li>
+<li><span class="math">\(\mathrm{B}_6 = \langle \mathrm{b}_{18} \rangle\)</span></li>
+<li><span class="math">\(\mathrm{B}_7 = \langle \mathrm{b}_{22} \rangle\)</span></li>
+<li><span class="math">\(\mathrm{B}_8 = \langle \mathrm{b}_{3},                  \mathrm{b}_{4},                  \mathrm{b}_{5},                  \mathrm{b}_{6},                  \mathrm{b}_{7},                  \mathrm{b}_{8},                  \mathrm{b}_{9},                  \mathrm{b}_{11},                  \mathrm{b}_{12},                  \mathrm{b}_{13},                  \mathrm{b}_{14},                  \mathrm{b}_{16},                  \mathrm{b}_{17},                  \mathrm{b}_{19},                  \mathrm{b}_{20},                  \mathrm{b}_{21},                  \mathrm{b}_{23},                  \mathrm{b}_{24},                  \mathrm{b}_{26},                  \mathrm{b}_{28},                  \mathrm{b}_{29},                  \mathrm{b}_{30} \rangle\)</span></li>
+</ul>
+<p>Based on that, the <code>BinaryFrontend</code> will turn the 30-dimensional binary input space into an 8-dimensional output space of categorical variables by using binary encoding.</p>
+<p>For example, if <span class="math">\(\mathbf{b}_{10} = 1\)</span> and <span class="math">\(\mathbf{b}_{25} = 0\)</span>, then <span class="math">\(\mathbf{B}_2 = 1*2^1 + 0*2^0 = 2\)</span>, thus encoding the <span class="math">\(2^2 = 4\)</span> possible values for the combination of <span class="math">\(\mathrm{b}_{10}\)</span> and <span class="math">\(\mathrm{b}_{25}\)</span>.</p>
+<p>For <span class="math">\(\mathrm{B}_8\)</span>, which contains 22 binary features, the number of possible combinations is in theory <span class="math">\(2^{22} \approx 4\mathrm{M}\)</span>, but since they are highly correlated with each other, the number of values actually seen in data will be much smaller.</p>
+<h2 id="homebrewcontinuousfrontend"><code>HomebrewContinuousFrontend</code></h2>
+<p>We can now turn attention to the 70 continuous features <span class="math">\(\mathrm{x}_1, \mathrm{x}_2, \ldots, \mathrm{x}_{70}\)</span>. During the exploration stage of this project, it turned out that some pairs of dimensions show only weak correlations, while others show strong correlations, either positive or negative. Thinking of each of the dimensions as being additively composed of information that is useful to the classification problem at hand and of noise, results suggested that there is a varying amount of noise on each of the dimensions, with some dimensions possibly contributing nothing but noise. Handling the classification problem in the 70-dimensional space directly seemed like the wrong approach. Instead, it seemed advisable to use some mechanism for dimensionality reduction that would allow the noise component to cancel out.</p>
+<p>The approach is, once again, based on the idea of partitioning the set of features into clusters, so that features in the same cluster would be highly correlated with each other, but uncorrelated to features in other clusters. In the output space resulting from this technique, each cluster turns into a single dimension, the value along that dimension being the average of the values along the input dimensions in that cluster.</p>
+<p>If, for example, the algorithm is considering as a working hypothesis, the possibility that there might be two clusters <span class="math">\(\mathrm{X}_1    = \lbrace \mathrm{x}_{1}, \mathrm{x}_{2} \rbrace\)</span> and <span class="math">\(\mathrm{X}_2    = \lbrace \mathrm{x}_{4}, \mathrm{x}_{5}, \mathrm{x}_{6} \rbrace\)</span>, then <span class="math">\(\mathbf{X}_1    = \frac{1}{2} ( \mathbf{x}_{1} + \mathbf{x}_{2} )\)</span> and <span class="math">\(\mathbf{X}_2    = \frac{1}{3} ( \mathbf{x}_{4} + \mathbf{x}_{5} + \mathbf{x}_{6} )\)</span>.</p>
+<p>In addition, there can be situations, where we flip the sign on a dimension for purposes of computing the average. For example, in the cluster <span class="math">\(\mathrm{X}_3 =    \lbrace \mathrm{x}_{2}, -\mathrm{x}_{3}, \mathrm{x}_{9} \rbrace\)</span>, the negative sign to <span class="math">\(-\mathrm{x}_{3}\)</span> would denote the fact that the clustering algorithm observed a negative rather than a positive correlation between <span class="math">\(\mathrm{x}_{2}\)</span> and <span class="math">\(\mathrm{x}_{3}\)</span>, whereas the correlation between <span class="math">\(\mathrm{x}_{2}\)</span> and <span class="math">\(\mathrm{x}_{9}\)</span> was positive. In this case, the average would be computed as <span class="math">\(\mathbf{X}_3    = \frac{1}{3} ( \mathbf{x}_{2} - \mathbf{x}_{3} + \mathbf{x}_{9} )\)</span>.</p>
+<p>The hope is that, if a pair of features is correlated, the correlation comes about because they both carry as an additive component the same piece of information that is useful to the classification problem at hand, plus a noise term that would cancel out when the average is computed. For example, if these are the returns on individual stocks, then one cluster might be tech stocks, because they are all additively composed of tech sector risk, plus idiosyncratic risk, whereas another cluster might be banking stocks, because they are additively composed of banking sector risk, plus idiosyncratic risk, etc. If the classification at hand is a function of sector risk, rather than the idiosyncratic risk on any particular stock, then this would be the type of situation, where this kind of feature engineering would do some good. The added complexity of having to flip signs sometimes would come about if, for example, these are stock options, some of them being calls, and some of them being puts. An IBM call would have a positive return if the IBM stock has a positive return, whereas a Microsoft put would have a negative return if the Microsoft stock has a positive return. So the negative correlation that might be observed between an IBM call and a Microsoft put would indicate the sector risk portion, but with an inverted sign. If these were simply added together, the interesting part would cancel out, instead of being amplified, so that’s why it would be necessary to flip the signs accordingly.</p>
+<p>I will admit, at this point, that the evidence to suggest that the example data in the classification problem at hand is of that type, is thin, but the evidence to suggest any other kind of structure is just as thin, so I decided to try this kind of feature engineering on this data, and see where we end up.</p>
+<p>The algorithm that creates the clusters works as follows: The starting point is that each individual dimension is an individual cluster. It then looks through all pairs of clusters, and merges the two which have the highest correlation, subject to the fact that a correlation of 0.33 is the minimum needed to justify merging. This is repeatedly done, until no two clusters can be merged.</p>
+<p>The resulting set of clusters is as follows:</p>
+<ul>
+<li><span class="math">\(\mathrm{X}_1 = \lbrace \mathrm{x}_{24} \rbrace\)</span></li>
+<li><span class="math">\(\mathrm{X}_2 = \lbrace -\mathrm{x}_{59}, \mathrm{x}_{38} \rbrace\)</span></li>
+<li><span class="math">\(\mathrm{X}_3 = \lbrace -\mathrm{x}_{40}, \mathrm{x}_{22} \rbrace\)</span></li>
+<li><span class="math">\(\mathrm{X}_4 = \lbrace -\mathrm{x}_{65}, \mathrm{x}_{7} \rbrace\)</span></li>
+<li><span class="math">\(\mathrm{X}_5 = \lbrace -\mathrm{x}_{30}, \mathrm{x}_{23} \rbrace\)</span></li>
+<li><span class="math">\(\mathrm{X}_6 = \lbrace -\mathrm{x}_{70},                           -\mathrm{x}_{60},                           \mathrm{x}_{47} \rbrace\)</span></li>
+<li><span class="math">\(\mathrm{X}_7 = \lbrace\)</span> <span class="math">\(-\mathrm{x}_{58},\)</span> <span class="math">\(-\mathrm{x}_{55},\)</span> <span class="math">\(-\mathrm{x}_{50},\)</span> <span class="math">\(-\mathrm{x}_{43},\)</span> <span class="math">\(-\mathrm{x}_{42},\)</span> <span class="math">\(-\mathrm{x}_{36},\)</span> <span class="math">\(-\mathrm{x}_{28},\)</span> <span class="math">\(-\mathrm{x}_{27},\)</span> <span class="math">\(-\mathrm{x}_{20},\)</span> <span class="math">\(-\mathrm{x}_{8},\)</span> <span class="math">\(-\mathrm{x}_{6},\)</span> <span class="math">\(\mathrm{x}_{1},\)</span> <span class="math">\(\mathrm{x}_{2},\)</span> <span class="math">\(\mathrm{x}_{5},\)</span> <span class="math">\(\mathrm{x}_{11},\)</span> <span class="math">\(\mathrm{x}_{12},\)</span> <span class="math">\(\mathrm{x}_{15},\)</span> <span class="math">\(\mathrm{x}_{18},\)</span> <span class="math">\(\mathrm{x}_{21},\)</span> <span class="math">\(\mathrm{x}_{31},\)</span> <span class="math">\(\mathrm{x}_{41},\)</span> <span class="math">\(\mathrm{x}_{61} \rbrace\)</span></li>
+<li><span class="math">\(\mathrm{X}_8 = \lbrace\)</span> <span class="math">\(-\mathrm{x}_{69},\)</span> <span class="math">\(-\mathrm{x}_{68},\)</span> <span class="math">\(-\mathrm{x}_{64},\)</span> <span class="math">\(-\mathrm{x}_{62},\)</span> <span class="math">\(-\mathrm{x}_{57},\)</span> <span class="math">\(-\mathrm{x}_{56},\)</span> <span class="math">\(-\mathrm{x}_{53},\)</span> <span class="math">\(-\mathrm{x}_{51},\)</span> <span class="math">\(-\mathrm{x}_{44},\)</span> <span class="math">\(-\mathrm{x}_{39},\)</span> <span class="math">\(-\mathrm{x}_{37},\)</span> <span class="math">\(-\mathrm{x}_{35},\)</span> <span class="math">\(-\mathrm{x}_{29},\)</span> <span class="math">\(-\mathrm{x}_{19},\)</span> <span class="math">\(-\mathrm{x}_{13},\)</span> <span class="math">\(-\mathrm{x}_9,\)</span> <span class="math">\(\mathrm{x}_3,\)</span> <span class="math">\(\mathrm{x}_4,\)</span> <span class="math">\(\mathrm{x}_{10},\)</span> <span class="math">\(\mathrm{x}_{14},\)</span> <span class="math">\(\mathrm{x}_{16},\)</span> <span class="math">\(\mathrm{x}_{17},\)</span> <span class="math">\(\mathrm{x}_{25},\)</span> <span class="math">\(\mathrm{x}_{26},\)</span> <span class="math">\(\mathrm{x}_{32},\)</span> <span class="math">\(\mathrm{x}_{33},\)</span> <span class="math">\(\mathrm{x}_{34},\)</span> <span class="math">\(\mathrm{x}_{45},\)</span> <span class="math">\(\mathrm{x}_{46},\)</span> <span class="math">\(\mathrm{x}_{48},\)</span> <span class="math">\(\mathrm{x}_{49},\)</span> <span class="math">\(\mathrm{x}_{52},\)</span> <span class="math">\(\mathrm{x}_{54},\)</span> <span class="math">\(\mathrm{x}_{63},\)</span> <span class="math">\(\mathrm{x}_{66},\)</span> <span class="math">\(\mathrm{x}_{67} \rbrace.\)</span></li>
+</ul>
+<p>So this translates the <span class="math">\(70\)</span>-dimensional input space to an <span class="math">\(8\)</span>-dimensional output space.</p>
+<h2 id="featureselector"><code>FeatureSelector</code></h2>
+<p>Applying the <code>BinaryFrontend</code> to the 30 binary features, we get 8 categorical features, plus the categorical feature <span class="math">\(\mathrm{C}\)</span>, which makes 9 categorical features. Applying the <code>HomebrewContinuousFrontend</code> to the 70 continuous-valued features, gives us 8 continuous-valued features, for a total of 17 features. Now, we’ll try to further reduce that.</p>
+<p>Both in the <code>BinaryFrontend</code> and in the <code>HomebrewContinuousFrontend</code>, the basic idea was to perform a translation on the input space based on the correlation structure that exists among the features, with the goal of achieving decorrelation by grouping features together, which leads to dimensionality reduction as a side-effect. So the idea here is similar to many common feature engineering techniques, such as Principal Component Analysis (PCA), which tries to explain as much of the covariance in the data with as few dimensions as possible.</p>
+<p>But applying PCA as a dimensionality reduction technique as a preprocessing step for classification has the drawback that PCA does not at all take into account the class labels you are trying to distinguish. So there is nothing to guarantee that PCA will not discard exactly those dimensions that are useful to the classification problem at hand.</p>
+<p>This is why in our approach, so far, no information has been directly discarded. The worst that can happen is that a dimension that seems completely uncorrelated to everything else ends up in a cluster on its own, thus, effectively being passed through unaltered from the input space to the output space.</p>
+<p>Within the feature selection stage of the feature engineering frontend, the goal is to now finally get rid of those dimensions which do not carry any information that is useful to the classification problem we are trying to solve.</p>
+<p>In order to do that, we first convert the 8 continuous-valued features into categorical features, by assigning each value to one of 32 buckets of equal probabilistic weight. So, along each dimension, the first bucket would contain values between the minimum and roughly the 3rd percentile, the second bucket would contain values exceeding the 3rd percentile up to about the 6th percentile, etc. The component which does that is called the <code>FeatureDiscretizer</code>.</p>
+<p>So instead of looking at 9 categorical features, plus 8 continuous-values features, the feature space, in the <code>FeatureSelector</code>’s view of the world is composed of 17 categorical features. – N.b. that the discretization is only used for the feature selection. The continuous features retain their original values for later use for classification.</p>
+<p>The <code>FeatureSelector</code> then picks which features to keep and which to eliminate based on the following criteria as quantified in information theoretic terms:</p>
+<ul>
+<li>The five dimensions with the highest absolute information content are selected as “core” features.</li>
+<li>The three dimensions most highly correlated with the dependent variable <code>y</code> are added to those “core” features.</li>
+<li>All features with correlation higher than 50% relative to one of the core features are also selected (they are called the “satellite” features in the code).</li>
+</ul>
+<p>Information content and correlation, in this example, is, once again, measured in information theoretic terms.</p>
+<p>Based on this procedure, the following dimensions are selected:</p>
+<ul>
+<li><span class="math">\(\lbrace      \mathrm{C},      \mathrm{B}_2,      \mathrm{B}_4,      \mathrm{B}_8,      \mathrm{X}_3,      \mathrm{X}_5,      \mathrm{X}_8 \rbrace\)</span></li>
+</ul>
+<p>So, with the help of our feature engineering frontend, we can boil down 1 categorical feature, 30 binary features, and 70 continuous-valued features from the input space into 4 categorical features and 3 continuous-valued features in the output space.</p>
+<p>The selection of the features above seems to mesh well with some of the intuitions one might form based on looking at the results from the previous two sections: Among the binary features, it is exactly the two larger clusters that end up getting selected here, which is the case more or less by definition, since the larger number of binary features in each cluster leads to a larger number of possible values for the resulting categorical feature, which, in turn, leads to more information, as measured by entropy. The only way this wouldn’t be the case is if it turned out that only a small number of the combinations of values that are combinatorically possible actually appear in the data, or that they appear in the data with a highly skewed probability distribution.</p>
+<p>Among the continuous-valued features, it is somewhat surprising that one of the larger clusters, namely <span class="math">\(\mathrm{X}_8\)</span> does not make the list. This, however, might well be genuinely the right thing to do. Returning to our example about stock returns, it might jus tbe the case that there are a lot of tech stocks in the data, but the dependent variable simply isn’t affected by the sector return of the tech sector.</p>
+<h2 id="how-to-put-it-all-together">How To Put It All Together</h2>
+<p>To bring the section on the feature engineering frontend to a conclusion, I will summarize once more the components that are involved, and how they all plug into each other.</p>
+<ul>
+<li><code>CategoricalFrontend</code> is a structural placeholder (i.e. dummy class) that passes through the value of <span class="math">\(\mathrm{C}\)</span> unchanged.</li>
+<li><code>BinaryFrontend</code> uses the correlation structure among binary features to create categorical variables grouping together clusters of binary features that are strongly correlated with each other, but uncorrelated to features in other clusters.</li>
+<li><code>HomebrewContinuousFrontend</code> applies the same idea to continuous variables. It uses the correlation structure among continuous features to create a smaller number of continuous features which are averages across clusters of continuous features that are strongly correlated with each other, but uncorrelated to features in other clusters.</li>
+<li><code>KPCAContinuousFrontend</code> is a (more or less) drop-in replacement for <code>HomebrewContinuousFrontend</code> that instead uses <a href="http://scikit-learn.org/">scikit-learn</a>’s <a href="http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.KernelPCA.html">Kernel PCA</a> method to digest the continuous features into a set of three continuous features.</li>
+</ul>
+<p>Within the feature selection stage:</p>
+<ul>
+<li><code>FeatureDiscretizer</code> turns the continuous-valued features which are the output of <code>HomebrewContinuousFrontend</code> into categorical variables by bucketizing them into 32 buckets of equal probabilitistic mass.</li>
+<li><code>FeatureSelector</code> uses categorical features, including discretized continuous features, to look at the correlation structure and eliminate features that seem unrelated to the dependent variable <span class="math">\(\mathrm{y}\)</span>.</li>
+</ul>
+<p>The following schematic shows how those might interact with each other, in an example-setting in which there are only 10, instead of 100, features.</p>
+<div style="width:25em">
+<img src="Fig1.svg" alt="Fig1" />
+</div>
+<h1 id="the-classifier">The Classifier</h1>
+<p>The point of departure for the construction of the actual classifier is that we are looking at 4 categorical features and 3 continuous-valued features, and based on the exploration stage of this project, we know a few things about the properties of the resulting feature space: First of all, the relative proportion of positives vs negatives shows a great deal of variation, as one selects different cells, as defined by combinations of categorical features and discretized continuous features. But it seems universally the case that the negative class overwhelms the positive class in every region of the feature space. All there is to capture here is these localized variations in the proportion of positives. One should not hope for proper separation of statisticall cells where there are more positives than negatives.</p>
+<p>So, this lead me to conclude that methods based on discriminant functions, linear or otherwise, are not well suited for this classification problem.</p>
+<p>Instead, I chose to use a variation of k nearest neighbor, thus essentially using proximity to known positive datapoints as a guide in assessing the likelihood that a new and previously unseen datapoint will be a positive.</p>
+<p>The standard use of k nearest neighbor would look at an unseen datapoint, find the k nearest neighbors, and use a majority vote to decide the class of the new datapoint: In our case, since pretty much every region of the space is more densely populated by negative datapoints than positive datapoints, this would necessarily lead to an overwhelming proportion of datapoints being classed as negative. It makes sense to do that, when evaluating on the basis of accuracy, using a completely symmetric cost for errors pertaining to positives being incorrectly classified as negatives vs negatives being incorrectly classified as positives. In our case, this would lead to good precision at the cost of bad recall. But based on the exploration stage of this project, I have come to expect that optimal f-measure will rather come about by sacrificing some precision in favor of recall.</p>
+<p>So, the standard use of the k nearest neighbor method needs some tweaking. In particular, one could relax the majority voting threshold. Given that there are so few positives in the data, even seeing maybe one or two positives among the seven nearest neighbors might be enough to justify classifying the point as a positive. – But there needs to be a theoretically well-motivated and principled way of doing that, otherwise the nearest neighbor idea just becomes meaningless.</p>
+<p>The second central difficutly one faces here, is how to properly integrate evidence from the categorical variables with evidence from the continuous variables, since most machine learning methods are primarily designed to work in continuous spaces (k-nearest-neighbor being one of them), perhaps allowing for binary features as a kind of an afterthought (having dimensions with values of zero or one, for instance), or they are primarily designed to work on categorical features, such as decision trees, allowing for continuous valued features in some more or less clumsy way, for example allowing the decision tree to do threshold comparison queries.</p>
+<p>What is needed is an overarching theoretical framework that can be applied to continuous-valued features as well as categorical features, and the framework of Bayesian statistical inference provides just that.</p>
+<p>Without further ado, let me present the construction, I have come up with, which is implemented in class <code>BKNNModel</code>.</p>
+<p>Given some values <span class="math">\(\langle \mathrm{C}, \mathrm{B}_2, \mathrm{B}_4, \mathrm{B}_8 \rangle\)</span> for the discrete valued-features <span class="math">\(\langle \mathbf{C}, \mathbf{B}_2, \mathbf{B}_4, \mathbf{B}_8 \rangle\)</span>, the Bayesian decision rule would imply that the predicted class label <span class="math">\(\hat{\mathrm{y}}\)</span> should be <span class="math">\[\hat{\mathrm{y}}
+  =
+  \textrm{argmax}_{y}
+  \big\lbrace
+  \mathbb{P}( \mathbf{y} = y )
+  \cdot
+  \mathbb{P}( \mathbf{C} = \mathrm{C} | \mathbf{y} = y  )
+  \cdot
+  \mathbb{P}( \mathbf{B}_2 = \mathrm{B}_2 | \mathbf{y} = y  )
+  \cdot
+  \mathbb{P}( \mathbf{B}_4 = \mathrm{B}_4 | \mathbf{y} = y )
+  \cdot
+  \mathbb{P}( \mathbf{B}_8 = \mathrm{B}_8 | \mathbf{y} = y )
+  \rbrace.\]</span></p>
+<p>This decision rule is based on an assumption of pairwise stochastic independence among the features whose likelihoods are being multiplied here: Through our feature engineering we have already done our best to ensure that this assumption is as valid as we can make it.</p>
+<p>There is only one missing ingredient, which is the evidence from the continuous-valued features. This is done through a an approach similar to <span class="math">\(k\)</span>-nearest neighbors. The way this works for <span class="math">\(k\)</span> = 7, is as follows.</p>
+<p>As part of the training phase of the modelling, the training data is simply stored as part of the model, together with the classlabels.</p>
+<p>Now, when called upon to make a classification for a previously unseen datapoint with values <span class="math">\(\vec{\mathrm{x}} = \langle \mathrm{X}_3, \mathrm{X}_5, \mathrm{X}_8 \rangle\)</span> for the discrete valued-features <span class="math">\(\langle \mathbf{X}_3, \mathbf{X}_5, \mathbf{X}_8 \rangle\)</span>, we simply look through the datapoints stored as part of the training procedure, and identify the 7 nearest positive datapoints <span class="math">\(\lbrace x^{(+)}_1, x^{(+)}_2, \ldots, x^{(+)}_7 \rbrace\)</span>. Assume this set is sorted by distance, so that <span class="math">\(x^{(+)}_7\)</span> is the one which is furthest from <span class="math">\(\mathrm{x}\)</span>. Let <span class="math">\(\mathrm{D} = \mathrm{d}( \mathrm{x}, x^{(+)}_7 )\)</span> be the distance between <span class="math">\(\mathrm{x}\)</span> and <span class="math">\(x^{(+)}_7\)</span>.</p>
+<p>Next, we enumerate the set <span class="math">\(\lbrace x^{(-)}_1, x^{(-)}_2, \ldots, x^{(-)}_Q \rbrace\)</span> of negative datapoints for which <span class="math">\(\mathrm{d}( \mathrm{x}, x^{(-)}_j ) \leq \mathrm{D}\)</span>, i.e. we look for the negative datapoints which are no further away from <span class="math">\(x\)</span> than the seventh-closest positive datapoint.</p>
+<p>The number <span class="math">\(Q\)</span> of such datapoints is the statistic we’re interested in.</p>
+<p>The idea behind this procedure is as follows: We want to ensure that the statistics going into the classifier are always derived from statistical cells large enough to generalize and reduce the impact of noise, even though there are regions in this space that are more densely and regions that are less densely populated. So it makes sense to allow the threshold distance to vary in this way.</p>
+<p>We can turn this statistic <span class="math">\(Q\)</span> into a pair of probabilities for our Bayesian classifier. All we need is the total number <span class="math">\(\mathrm{N}_{(+)}\)</span> of positive datapoints in the training sample, and the total of number <span class="math">\(\mathrm{N}_{(-)}\)</span> of negative datapoints in the training sample: First note that <span class="math">\[\mathbb{P}\big(
+     \mathrm{d}( \mathrm{x}, \mathbf{X} ) \leq \mathrm{D} | \mathbf{y} = 1
+  \big)
+     = \frac{\mathrm{7}}{\mathrm{N}_{(+)}},\]</span> by definition of <span class="math">\(\mathrm{D}\)</span>. We can then derive a comparable statistic for the other class, which is <span class="math">\[\mathbb{P}\big(
+     \mathrm{d}( \mathrm{x}, \mathbf{X} ) \leq \mathrm{D} | \mathbf{y} = 0
+  \big)
+     = \frac{Q}{\mathrm{N}_{(-)}}.\]</span></p>
+<p>And this is something we can easily integrate into our Bayesian classifier, by defining the decision rule as follows: <span class="math">\[\hat{\mathrm{y}}
+  =
+  \textrm{argmax}_{y}
+  \big\lbrace
+  \mathbb{P}( \mathbf{y} = y )
+  \cdot
+  \mathbb{P}( \mathbf{C} = \mathrm{C} | \mathbf{y} = y  )
+  \cdot
+  \mathbb{P}( \mathbf{B}_2 = \mathrm{B}_2 | \mathbf{y} = y  )
+  \cdot
+  \mathbb{P}( \mathbf{B}_4 = \mathrm{B}_4 | \mathbf{y} = y )
+  \cdot
+  \mathbb{P}( \mathbf{B}_8 = \mathrm{B}_8 | \mathbf{y} = y )
+  \cdot
+  \mathbb{P}\big(
+      \mathrm{d}( \mathrm{x}, \mathbf{X} ) \leq \mathrm{D} | \mathbf{y} = y
+    \big)
+  \rbrace.\]</span></p>
+<p>Since there are only two classes, i.e. two values for <span class="math">\(y\)</span>, those values being 0 and 1, we can apply some transformations that are quite commonplace when dealing with Bayesian decision rules for binary decisions. First, we apply an abbreviated notation, writing <span class="math">\(\mathbb{P}_1( \mathrm{B} )\)</span> as an abbreviateion for <span class="math">\(\mathbb{P}( \mathbf{B} = \mathrm{B} | \mathbf{y} = 1 )\)</span>, and <span class="math">\(\mathbb{P}_0(\cdot)\)</span> as an abbreviation for <span class="math">\(\mathbb{P}( \cdot | \mathbf{y} = 0 )\)</span> and writing <span class="math">\(\mathrm{P}_1\)</span> instead of <span class="math">\(\mathbb{P}( \mathbf{y} = 1 )\)</span> and <span class="math">\(\mathrm{P}_0\)</span> instead of <span class="math">\(\mathrm{P}_0\)</span></p>
+<p>Then, we restate the above rule by noticing that we decide <span class="math">\(\hat{\mathrm{y}} = 1\)</span> iff <span class="math">\[
+  \frac{
+    \mathrm{P}_1
+  }{
+    \mathrm{P}_0
+  }
+  \cdot
+  \frac{
+    \mathbb{P}_1( \mathrm{C} )
+  }{
+    \mathbb{P}_0( \mathrm{C} )
+  }
+  \cdot
+  \frac{
+    \mathbb{P}_1( \mathrm{B}_2 )
+  }{
+    \mathbb{P}_0( \mathrm{B}_2 )
+  }
+  \cdot
+  \frac{
+    \mathbb{P}_1( \mathrm{B}_4 )
+  }{
+    \mathbb{P}_0( \mathrm{B}_4 )  
+  }
+  \cdot
+  \frac{  
+    \mathbb{P}_1( \mathrm{B}_8 )
+  }{
+    \mathbb{P}_0( \mathrm{B}_8 )
+  }
+  \cdot
+  \frac{  
+    \mathbb{P}_1\big(
+        \mathrm{d}( \mathrm{x} ) \leq \mathrm{D}
+      \big)
+  }
+  {
+    \mathbb{P}_0\big(
+        \mathrm{d}( \mathrm{x} ) \leq \mathrm{D}
+      \big)  
+  }
+  &gt;
+  1,
+\]</span> and then, equivalently, by taking logs, <span class="math">\[
+  \log\Big(\frac{
+    \mathrm{P}_1
+  }{
+    \mathrm{P}_0
+  }
+  \Big) +
+  \log\Big(\frac{
+    \mathbb{P}_1( \mathrm{C} )
+  }{
+    \mathbb{P}_0( \mathrm{C} )
+  }
+  \Big) +  
+  \log\Big(\frac{
+    \mathbb{P}_1( \mathrm{B}_2 )
+  }{
+    \mathbb{P}_0( \mathrm{B}_2 )
+  }
+  \Big) +
+  \log\Big(\frac{
+    \mathbb{P}_1( \mathrm{B}_4 )
+  }{
+    \mathbb{P}_0( \mathrm{B}_4 )  
+  }
+  \Big) +
+  \log\Big(\frac{  
+    \mathbb{P}_1( \mathrm{B}_8 )
+  }{
+    \mathbb{P}_0( \mathrm{B}_8 )
+  }
+  \Big) +
+  \log\Big(\frac{  
+    \mathbb{P}_1\big(
+        \mathrm{d}( \mathrm{x} ) \leq \mathrm{D}
+      \big)
+  }
+  {
+    \mathbb{P}_0\big(
+        \mathrm{d}( \mathrm{x} ) \leq \mathrm{D}
+      \big)  
+  }
+  \Big)
+  &gt;
+  0.
+\]</span></p>
+<p>Next, we generalize this to the family of decision rules which, for some threshold <span class="math">\(\theta\)</span>, decide <span class="math">\(\hat{\mathrm{y}} = 1\)</span> iff <span class="math">\[
+  \log\Big(\frac{
+    \mathbb{P}_1( \mathrm{C} )
+  }{
+    \mathbb{P}_0( \mathrm{C} )
+  }
+  \Big) +
+  \log\Big(\frac{
+    \mathbb{P}_1( \mathrm{B}_2 )
+  }{
+    \mathbb{P}_0( \mathrm{B}_2 )
+  }
+  \Big) +
+  \log\Big(\frac{
+    \mathbb{P}_1( \mathrm{B}_4 )
+  }{
+    \mathbb{P}_0( \mathrm{B}_4 )  
+  }
+  \Big) +
+  \log\Big(\frac{  
+    \mathbb{P}_1( \mathrm{B}_8 )
+  }{
+    \mathbb{P}_0( \mathrm{B}_8 )
+  }
+  \Big) +
+  \log\Big(\frac{  
+    \mathbb{P}_1\big(
+        \mathrm{d}( \mathrm{x} ) \leq \mathrm{D}
+      \big)
+  }
+  {
+    \mathbb{P}_0\big(
+        \mathrm{d}( \mathrm{x} ) \leq \mathrm{D}
+      \big)  
+  }
+  \Big)
+  &gt;
+  \theta.
+\]</span></p>
+<p>In the above derivation of this Bayesian decision rule, I have not taken into account the effect of asymmetric error costs of false negatives vs false positives, but it is in fact easy to show that they factor into the decision rule in the same way as the ratio of priors. In the above formulation, all of these aspects would be incorporated into the decision threshold <span class="math">\(\theta\)</span>. Rather than deriving this threshold analytically, however, my implementation of this classifier treats this as an optimization problem, setting <span class="math">\(\theta\)</span> in such a way as to maximize the F-score obtained on the training sample.</p>
+<h1 id="results-conclusions-future-work">Results, Conclusions, Future Work</h1>
+<p>I tried two variations of this classifier: One using the <code>HomebrewContinuousFrontend</code> as described above, the other using Kernel PCA as implemented in <a href="http://scikit-learn.org/">scikit-learn</a> with cosine kernel, to preprocess the continuous features down into three dimensions.</p>
+<p>The evaluation methodology was to use standard metrics and the usual separation of training data vs development data: So I separated the training data provided into an 85% portion used to train a model, and I then applied the model to the remaining 15% of the data to deal with the effects of data snooping bias.</p>
+<p>The results obtained were as follows:</p>
+<p>With homebrew (on development data):</p>
+<pre><code>fscore = 0.1886
+precision = 0.1254
+recall = 0.3805
+true_positives = 3250
+false_positives = 22668
+true_negatives = 119049
+false_negatives = 5291  </code></pre>
+<p>With Kernel PCA (on development data):</p>
+<pre><code>fscore = 0.2422
+precision = 0.1674
+recall = 0.4375
+true_positives = 3737
+false_positives = 18582
+true_negatives = 123135
+false_negatives = 4804  </code></pre>
+<p>So, Kernel PCA seems to perform better on both precision and recall, and hence on f-measure.</p>
+<p>Looking at a result like that, it is always worthwhile to also check the result obtained when applying the model back to the data it was trained on to check for overfitting</p>
+<p>With Kernel PCA (on training data):</p>
+<pre><code>fscore = 0.2411
+precision = 0.1668
+recall = 0.4342
+true_positives = 20974
+false_positives = 104739
+true_negatives = 696622
+false_negatives = 27332</code></pre>
+<p>If the result as obtained on training data had been much better, then overfitting would have been a possible problem to look into. This problem is especially common for very high-dimensional techniques such as nearest neighbor methods. In this context it is worthwhile to also note that, for my implementation of nearest neighbor, I put in place some logic to prevent any points from being counted into either the 7 nearest positive neighbors or the corresponding number of negatives if that point is in fact identical to the point being queried. Otherwise there would be a systematic bias, especially among the positives, when applying the model back to its own training data.</p>
+<p>But with these numbers, it seems that overfitting is not an issue, since the model as tested on development data scores slightly better on both precision and recall, where one would normally expect the model to perform at least slighly worse on development data. This could be purely a coincidence, or there might be an issue in that the procedure described above to avoid overfitting actually overcompensates for the issue to a small extent, by not counting points appearing in a small region around each training data point, even though another point could have existed in that region as a matter of pure coincidence. These small regions result from the fact that the points in that region would all be represented in the CSV file in the same way, given that it uses only a handful of digits. – In any case the positive difference in scores seen here seems small enough in magnitude so that it would have been insignificant in comparison to the negative difference that would have resulted if overfitting had been a serious issue here.</p>
+<p>A few comments are in order about why Kernel PCA performed so much better than the homebrew method: From preliminary experiments during the exploration stage of this project, it turned out that the use of regular PCA (as opposed to Kernel PCA), as well as Kernel PCA with different choices of kernels performed comparably or slightly worse than the homebrew method. So there must be something to the cosine kernel representation in particular that helps in making the data more separable.</p>
+<p>The defining characteristic of the cosine kernel is the fact that it compares data points in terms of their angles, rather than length. This stems originally from the field of information retrieval, where documents are considered similar if keywords appear in those documents in the same proportions, disregarding the length of the document. So if we have one document where the keyword “risk” is mentioned 100 times, and the keyword “reputational” is mentioned 20 times, it is very similar to a document where the keyword “risk” is mentioned 10 times and the keyword “reputational” is mentioned twice, since the proportions are the same, and the difference in the absolute numbers is likely the result of differing overall document lengths, whereas a document that mentions “risk” 100 times and “reputational” only twice would be considered more dissimilar. (The first two documents are likely about “reputational risk”, the last of the documents is likely about “risk”, and the two mentions of “reputational” might be coincidental).</p>
+<p>Given these results, one might also want to revisit the construction of the homebrew feature engineering method: For example, the fact that the feature engineering eliminates one of the two very large clusters of mutually correlated features would need to be re-checked, by overriding that behaviour and checking the effect on the final f-measure. One might also want to try out deactivating the sign-flipping behaviour, etc. But then, finally, there is the possibility that the idea of creating sums across clusters of mutually correlated features simply isn’t helpful given the nature of the phenomenon underlying the data.</p>
+<p>For the purposes of the present project, we simply pick Kernel PCA as the better of the two alternatives, and use that as the basis for the submitted model decisions.</p>
+<h1 id="concluding-remarks">Concluding Remarks</h1>
+<p>So, this concludes my report on the approach I took to the algorithm challenge. As I’ve pointed out before, I’ve tried to keep this document as brief as possible, by merely describing the components that ended up being the solution I ultimately submitted. Essentially this is the kind of thing someone would want to read, if they were interested only in finding out what it is that my code actually does, without wanting to form an opinion on whether that approach is actually the best (or even a good) approach to the problem at hand. This also explains, why this document does not have any plots or tabulations relating to the effect of different paramter settings, etc. etc. – If you are interested in that part, check out the document <code>EXPLORATION</code>.</p>
+</body>
+</html>
